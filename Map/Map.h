@@ -8,18 +8,33 @@
 
 #include <string>
 #include <vector>
+const std::string MAPS_PATH = "../resources/maps/";
+const double FIELD_SPAN_RATIO = 0.05;
+enum FieldType{FIELD_BOMB, FIELD_EMPTY, FIELD_UNKNOWN, FIELD_FLAG, FIELD_NEST, FIELD_WATER};
 
-struct Map{
+struct Field {
+    FieldType type;
+    bool wasVisited;
+    bool isFlagged;
+    int bombsInArea;
+};
+
+struct Map {
     Field fields[100][100];
-    int maxX;
-    int maxY;
+    int sizeX;
+    int sizeY;
+    int bombsLimit;
+    int possibleToVisit;
     std::string name;
 };
 
-bool persistMap(Map *map, std::string *name);
-Map readMap(std::string name);
-Map initializeEmptyMap(int maxX, int maxY);
+bool persistMap(Map *map);
+Map loadMap(ALLEGRO_DISPLAY * display, std::string path);
+Map initializeEmptyMap(int sizeX, int sizeY);
 void displayMap(Map *map);
+bool updateGameState(Map *map);
+
+int getFieldSize(Map *map);
 std::vector<Map> getAllMaps();
 
 

@@ -6,9 +6,11 @@ Player createPlayer(string name) {
     player.name = name;
     player.score = 0;
     player.x = 0;
+    player.y = 0;
 }
 Player loadPlayer(string name) {
 
 }
+
 vector<Player> getPlayers();
 void presistPlayer(Player &player);
