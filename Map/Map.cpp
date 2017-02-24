@@ -28,7 +28,8 @@ bool persistMap(Map *map, ALLEGRO_DISPLAY *display) {
         file.open(al_get_native_file_dialog_path(filechooser, 0), ios::out);
         if (!file.good()) return false;
 
-        file << map->sizeX << " " << map->sizeY << " " << map->bombsLimit<< endl;
+        file << map->sizeX << " " << map->sizeY << " "
+             << map->bombsLimit << " " << map->emptyFields << endl;
         for (int x = 0; x < map->sizeX; x++) {
             for (int y = 0; x < map->sizeY; y++) {
                 file << map->fields[x][y].type << " "
@@ -60,6 +61,7 @@ bool loadMap(Map *map, ALLEGRO_DISPLAY * display, string path) {
     map->sizeX = getCord(&file);
     map->sizeY = getCord(&file);
     map->bombsLimit = getCord(&file);
+    map->emptyFields = getCord(&file);
     if (map->sizeX <= 0 || map->sizeX > 100 ||
             map->sizeY <= 0 || map->sizeY > 100 ||
             map->bombsLimit > map->sizeX * map->sizeY ||
@@ -84,17 +86,36 @@ int getCord(fstream *file) {
     return atoi(temp.c_str());
 }
 
+void createFields(Map *map) {
+    map ->fields = new Field*[map->sizeX] ;
+    for (int x = 0; x < map ->sizeX; x++) {
+        map ->fields[x] = new Field[map->sizeY];
+    }
+}
 
-Map initializeEmptyMap(int sizeX, int sizeY) {
-    Map map;
-    map.sizeX = sizeX;
-    map.sizeY = sizeY;
+void initializeEmptyMap(Map *map, int sizeX, int sizeY) {
+    map = new Map();
+    map->sizeX = sizeX;
+    map->sizeY = sizeY;
+    createFields(map);
     for (int x = 0; x < sizeX; x++) {
         for (int y = 0; y < sizeY; y++) {
-            map.fields[x][y].wasVisited = true;
-            map.fields[x][y].type = FIELD_EMPTY;
-            map.fields[x][y].bombsInArea = 0;
+            map->fields[x][y].wasVisited = true;
+            map->fields[x][y].type = FIELD_EMPTY;
+            map->fields[x][y].bombsInArea = 0;
         }
+    }
+}
+
+void destroyMap(Map *map) {
+    if (map != nullptr) {
+        if (map->fields != nullptr) {
+            for (int x = 0; x < map->sizeX; x++) {
+                delete [] map->fields[x];
+            }
+            delete [] map->fields;
+        }
+        delete map;
     }
 }
 
@@ -145,9 +166,10 @@ ALLEGRO_COLOR getFieldColor(FieldType fieldType, bool visited, bool isFlagged) {
     else if (isFlagged) return al_map_rgb(224, 224, 224);
     else {
         switch (fieldType) {
-            case FIELD_EMPTY: return al_map_rgb(220, 231, 117);
+            case FIELD_EMPTY: return getMenuBackgroundColor();
             case FIELD_BOMB: return al_map_rgb(229, 57, 53);
-            case FIELD_NEST: return getMenuBackgroundColor();
+            case FIELD_UNKNOWN: return al_map_rgb(220, 231, 117);
+            case FIELD_VIRGIN:
             default: return al_map_rgb(255,255,255);
         }
     }
@@ -172,11 +194,37 @@ bool updateGameState(Map *map) {
         }
     }
 }
+
 int getFieldSize(Map *map) {
     int maxFieldAmount = max(map->sizeX, map->sizeY);
-    int maxSize = max(SCREEN_HEIGHT, SCREEN_WIDTH);
-    return (int)(maxSize / (double)maxFieldAmount * (1 - FIELD_SPAN_RATIO));
+    int maxSize = min(SCREEN_HEIGHT, SCREEN_WIDTH);
+    return (int)(maxSize / (double) maxFieldAmount * (1 - FIELD_SPAN_RATIO));
 }
 std::vector<Map> getAllMaps() {
 
 }
+
+void initializeColors(MapColors *palette) {
+    palette = new MapColors();
+    palette->colors = new ALLEGRO_COLOR[MAP_FIELDS_TYPES];
+    palette->colors[FIELD_BOMB] = al_map_rgb(229, 57, 53);
+    palette->colors[FIELD_EMPTY] = getMenuBackgroundColor();
+    palette->colors[FIELD_VIRGIN] = al_map_rgb(129, 199, 132);
+    palette->colors[FIELD_UNKNOWN] = al_map_rgb(220, 231, 117);
+    palette->colors[FIELD_WATER] = al_map_rgb(3, 169, 244);
+    palette->colors[FIELD_FLAG] = al_map_rgb(142, 36, 170);
+}
+
+void destroyColors(MapColors *palette) {
+    if (palette != nullptr) {
+        if (palette->colors != nullptr) {
+            delete [] palette->colors;
+        }
+        delete palette;
+    }
+}
+void setFieldAsBomb(Map *map, int x, int y);
+void setFieldAsEmpty(Map *map, int x, int y);
+void setFieldAsUnknown(Map *map, int x, int y);
+void setFieldAsFlagged(Map *map, int x, int y);
+void setFieldAsVirgin(Map *map, int x, int y);

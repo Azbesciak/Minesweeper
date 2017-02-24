@@ -25,7 +25,7 @@ struct Menu {
 void createMainMenu(Menu *menu);
 void createMapEditorMenu(Menu *menu);
 void createMenu(Menu *menu, int options);
-void clearMenu(Menu *menu);
+void destroyMenu(Menu *menu);
 void setOption(Menu *menu, int optionId, string name);
 void setOptionWithValues(Menu *menu, int optionId, string name, int value);
 void displayMenu(Menu *menu, ALLEGRO_FONT *font);

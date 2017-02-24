@@ -16,7 +16,7 @@ GameState maintainMainMenuState(ALLEGRO_EVENT *event, Menu *menu, ALLEGRO_FONT *
 
 GameState maintainMapEditorMenu(ALLEGRO_EVENT *event, Menu *menu, ALLEGRO_FONT *menuFont) ;
 
-GameState maintainMapEditor(ALLEGRO_EVENT *event, Menu *menu, ALLEGRO_FONT *menuFont);
+GameState maintainMapEditor(ALLEGRO_EVENT *event, Menu *menu, ALLEGRO_FONT *menuFont, ALLEGRO_DISPLAY *pDISPLAY);
 
 int main(int argc, char **argv) {
     ALLEGRO_DISPLAY *display = NULL;
@@ -40,6 +40,7 @@ int main(int argc, char **argv) {
     al_init_ttf_addon();
 
     al_hide_mouse_cursor(display);
+    al_install_mouse();
 
     eventQueue = al_create_event_queue();
     ALLEGRO_FONT *menuFont = al_load_font("../pricedown bl.ttf", 36, 0);
@@ -49,6 +50,7 @@ int main(int argc, char **argv) {
     al_register_event_source(eventQueue, al_get_keyboard_event_source());
     al_register_event_source(eventQueue, al_get_display_event_source(display));
     al_register_event_source(eventQueue, al_get_timer_event_source(timer));
+    al_register_event_source(eventQueue, al_get_mouse_event_source());
     al_start_timer(timer);
 
     Menu *menu = new Menu();
@@ -72,7 +74,7 @@ int main(int argc, char **argv) {
                 gameState = maintainMapEditorMenu(&event, menu, menuFont);
                 break;
             case STATE_EDITOR:
-                gameState = maintainMapEditor(&event, menu, menuFont);
+                gameState = maintainMapEditor(&event, menu, menuFont, display);
                 break;
             default: gameOver = true;
         }
@@ -89,12 +91,11 @@ int main(int argc, char **argv) {
                 case STATE_EDITOR_MENU:
                      createMapEditorMenu(menu); break;
                 default: gameOver = true;
-                    clearMenu(menu);
             }
         }
 
     }
-
+    destroyMenu(menu);
     al_destroy_timer(timer);
     al_destroy_font(menuFont);
     al_destroy_event_queue(eventQueue);
@@ -111,14 +112,12 @@ GameState maintainMainMenuState(ALLEGRO_EVENT *event, Menu *menu, ALLEGRO_FONT *
             case ALLEGRO_KEY_ESCAPE: gameOver = true; break;
             case ALLEGRO_KEY_ENTER: {
                 int option = getSelectedOption(menu);
-                if (option == MENU_QUIT) {
-                    gameOver = true;
-                } else if (option == MENU_START_GAME) {
-                    return STATE_SELECT_MODE;
-                } else if (option == MENU_EDITOR) {
-                    return  STATE_EDITOR_MENU;
+                switch (option) {
+                    case MENU_QUIT: gameOver = true; break;
+                    case MENU_START_GAME: return STATE_SELECT_MODE;
+                    case MENU_EDITOR: return STATE_EDITOR_MENU;
+                    default : break;
                 }
-                break;
             }
             default : break;
         }
@@ -139,12 +138,11 @@ GameState maintainMapEditorMenu(ALLEGRO_EVENT *event, Menu *menu, ALLEGRO_FONT *
             case ALLEGRO_KEY_ESCAPE: return STATE_MAIN_MENU;
             case ALLEGRO_KEY_ENTER: {
                 int option = getSelectedOption(menu);
-                if (option == EDITOR_MENU_START) {
-                    return STATE_EDITOR_MENU;
-                } else if (option == EDITOR_MENU_CHOOSE_HEIGHT || option == EDITOR_MENU_CHOOSE_WIDTH) {
-                    maintainEnterInEditorMenu(menu);
-                } else {
-                    return STATE_MAIN_MENU;
+                switch (option) {
+                    case EDITOR_MENU_START: return STATE_EDITOR;
+                    case EDITOR_MENU_CHOOSE_HEIGHT:
+                    case EDITOR_MENU_CHOOSE_WIDTH: maintainEnterInEditorMenu(menu); break;
+                    default : return STATE_MAIN_MENU;
                 }
                 break;
             }
@@ -157,6 +155,10 @@ GameState maintainMapEditorMenu(ALLEGRO_EVENT *event, Menu *menu, ALLEGRO_FONT *
     return STATE_EDITOR_MENU;
 }
 
-GameState maintainMapEditor(ALLEGRO_EVENT *event, Menu *menu, ALLEGRO_FONT *menuFont) {
+GameState maintainMapEditor(ALLEGRO_EVENT *event, Menu *menu, ALLEGRO_FONT *menuFont, ALLEGRO_DISPLAY *display) {
+    destroyMenu(menu);
+
+    al_show_mouse_cursor(display);
+//    if (event->type == )
     return STATE_MAIN_MENU;
 }

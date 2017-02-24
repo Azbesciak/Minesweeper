@@ -17,7 +17,17 @@ const int MAX_FIELDS = 100;
 const int MIN_FIELDS = 5;
 const double FPS = 24.0;
 
+struct Point {
+    int x;
+    int y;
+};
 
+void initializePoint(Point *point, int x, int y);
+void destroyPoint(Point *point);
+int getX(Point *point);
+void setX(Point *point, int x);
+int getY(Point *point);
+void setY(Point *point, int y);
 ALLEGRO_COLOR getMenuHighlightColor();
 ALLEGRO_COLOR getMenuNormalColor();
 ALLEGRO_COLOR getArrowHighlightColor();

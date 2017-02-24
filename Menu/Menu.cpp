@@ -4,7 +4,7 @@
 
 
 void createMainMenu(Menu *menu) {
-    clearMenu(menu);
+    destroyMenu(menu);
     createMenu(menu, MAIN_MENU_OPTIONS);
     setOption(menu, MENU_START_GAME, "Play game");
     setOption(menu, MENU_EDITOR, "Editor");
@@ -13,7 +13,7 @@ void createMainMenu(Menu *menu) {
 }
 
 void createMapEditorMenu(Menu *menu) {
-    clearMenu(menu);
+    destroyMenu(menu);
     createMenu(menu, EDITOR_MENU_OPTIONS);
     setOptionWithValues(menu, EDITOR_MENU_CHOOSE_HEIGHT, "Height", 10);
     setOptionWithValues(menu, EDITOR_MENU_CHOOSE_WIDTH, "Width", 10);
@@ -24,15 +24,19 @@ void createMapEditorMenu(Menu *menu) {
 }
 
 void createMenu(Menu *menu, int options) {
+    menu = new Menu();
     menu->option = new string[options];
     menu->value = new int[options];
     menu ->options = options;
 }
 
-void clearMenu(Menu *menu) {
-    delete[] menu->option;
-    delete[] menu->value;
-    menu->options = 0;
+void destroyMenu(Menu *menu) {
+    if (menu != nullptr) {
+        delete[] menu->option;
+        delete[] menu->value;
+        menu->options = 0;
+        delete menu;
+    }
 }
 
 void setOption(Menu *menu, int optionId, string name) {
