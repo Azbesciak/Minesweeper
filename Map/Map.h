@@ -5,7 +5,7 @@
 #ifndef MINESWEEPER_MAP_H
 #define MINESWEEPER_MAP_H
 #include "../Utils/Utils.h"
-
+#include <allegro5/allegro5.h>
 #include <string>
 #include <vector>
 const std::string MAPS_PATH = "../resources/maps/";
@@ -20,7 +20,7 @@ struct Field {
 };
 
 struct Map {
-    Field fields[100][100];
+    Field **fields;
     int sizeX;
     int sizeY;
     int bombsLimit;

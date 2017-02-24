@@ -51,7 +51,8 @@ int main(int argc, char **argv) {
     al_register_event_source(eventQueue, al_get_timer_event_source(timer));
     al_start_timer(timer);
 
-    Menu menu = createMainMenu();
+    Menu *menu = new Menu();
+    createMainMenu(menu);
     GameState gameState = STATE_MAIN_MENU;
 
     while (!gameOver) {
@@ -65,13 +66,13 @@ int main(int argc, char **argv) {
 
         switch (gameState) {
             case STATE_MAIN_MENU:
-                gameState = maintainMainMenuState(&event, &menu, menuFont);
+                gameState = maintainMainMenuState(&event, menu, menuFont);
                 break;
             case STATE_EDITOR_MENU:
-                gameState = maintainMapEditorMenu(&event, &menu, menuFont);
+                gameState = maintainMapEditorMenu(&event, menu, menuFont);
                 break;
             case STATE_EDITOR:
-                gameState = maintainMapEditor(&event, &menu, menuFont);
+                gameState = maintainMapEditor(&event, menu, menuFont);
                 break;
             default: gameOver = true;
         }
@@ -84,10 +85,11 @@ int main(int argc, char **argv) {
         if (temp != gameState) {
             switch (gameState) {
                 case STATE_MAIN_MENU:
-                    menu = createMainMenu(); break;
+                    createMainMenu(menu); break;
                 case STATE_EDITOR_MENU:
-                    menu = createMapEditorMenu(); break;
+                     createMapEditorMenu(menu); break;
                 default: gameOver = true;
+                    clearMenu(menu);
             }
         }
 
@@ -123,7 +125,7 @@ GameState maintainMainMenuState(ALLEGRO_EVENT *event, Menu *menu, ALLEGRO_FONT *
     } else if (event->type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
         gameOver = true;
     }
-    displayMainMenu(menu, menuFont);
+    displayMenu(menu, menuFont);
     return STATE_MAIN_MENU;
 }
 
@@ -151,7 +153,7 @@ GameState maintainMapEditorMenu(ALLEGRO_EVENT *event, Menu *menu, ALLEGRO_FONT *
     } else if (event->type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
         gameOver = true;
     }
-    displayEditorMenu(menu, menuFont);
+    displayMenu(menu, menuFont);
     return STATE_EDITOR_MENU;
 }
 

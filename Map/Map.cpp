@@ -42,46 +42,46 @@ bool persistMap(Map *map, ALLEGRO_DISPLAY *display) {
 }
 
 
-Map loadMap(ALLEGRO_DISPLAY * display, string path) {
+bool loadMap(Map *map, ALLEGRO_DISPLAY * display, string path) {
     if (!al_init_native_dialog_addon()) return NULL;
 
     if (path.compare("") == 0) {
         ALLEGRO_FILECHOOSER *filechooser =
                 al_create_native_file_dialog(MAPS_PATH.c_str(), "Load map.", "*.map", ALLEGRO_FILECHOOSER_FILE_MUST_EXIST);
-        if (!al_show_native_file_dialog(display, filechooser)) return NULL;
+        if (!al_show_native_file_dialog(display, filechooser)) return false;
         if (!al_get_native_file_dialog_count(filechooser) > 0)
             path = al_get_native_file_dialog_path(filechooser, 0);
-        else return NULL;
+        else return false;
     }
     fstream file;
     file.open(path, ios::in);
-    if (!file.good()) return NULL;
-    Map map;
-
-    map.sizeX = getCord(&file);
-    map.sizeY = getCord(&file);
-    map.bombsLimit = getCord(&file);
-    if (map.sizeX <= 0 || map.sizeX > 100 ||
-            map.sizeY <= 0 || map.sizeY > 100 ||
-            map.bombsLimit > map.sizeX * map.sizeY ||
-            map.bombsLimit < 0) {
-        return NULL;
+    if (!file.good()) return false;
+    map = new Map;
+    map->sizeX = getCord(&file);
+    map->sizeY = getCord(&file);
+    map->bombsLimit = getCord(&file);
+    if (map->sizeX <= 0 || map->sizeX > 100 ||
+            map->sizeY <= 0 || map->sizeY > 100 ||
+            map->bombsLimit > map->sizeX * map->sizeY ||
+            map->bombsLimit < 0) {
+        delete map;
+        return false;
     }
-    for (int x = 0; x < map.sizeX; x++) {
-        for (int y = 0; y < map.sizeY; y++) {
-            map.fields[x][y].wasVisited = false;
-            map.fields[x][y].isFlagged = false;
-            map.fields[x][y].type = (FieldType) getCord(&file);
-            map.fields[x][y].bombsInArea = getCord(&file);
+    for (int x = 0; x < map->sizeX; x++) {
+        for (int y = 0; y < map->sizeY; y++) {
+            map->fields[x][y].wasVisited = false;
+            map->fields[x][y].isFlagged = false;
+            map->fields[x][y].type = (FieldType) getCord(&file);
+            map->fields[x][y].bombsInArea = getCord(&file);
         }
     }
-    return map;
+    return true;
 }
 
 int getCord(fstream *file) {
     string temp;
     getline(*file, temp, ' ');
-    return atoi(temp);
+    return atoi(temp.c_str());
 }
 
 
