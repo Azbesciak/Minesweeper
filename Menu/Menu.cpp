@@ -1,55 +1,77 @@
 #include "../Utils/Utils.h"
 #include "Menu.h"
+#include "../Map/Map.h"
 #include <allegro5/allegro_primitives.h>
 
-
-void createMainMenu(Menu *menu) {
-    destroyMenu(menu);
-    createMenu(menu, MAIN_MENU_OPTIONS);
-    setOption(menu, MENU_START_GAME, "Play game");
-    setOption(menu, MENU_EDITOR, "Editor");
-    setOption(menu, MENU_QUIT, "Exit");
-    selectVerticalOption(menu, MENU_START_GAME);
+Menu *menu = nullptr;
+ALLEGRO_FONT *menuFont = nullptr;
+void initializeMenuFont() {
+    menuFont = al_load_font("../pricedown bl.ttf", 36, 0);
+}
+void destroyMenuFont() {
+    al_destroy_font(menuFont);
 }
 
-void createMapEditorMenu(Menu *menu) {
-    destroyMenu(menu);
-    createMenu(menu, EDITOR_MENU_OPTIONS);
-    setOptionWithValues(menu, EDITOR_MENU_CHOOSE_HEIGHT, "Height", 10);
-    setOptionWithValues(menu, EDITOR_MENU_CHOOSE_WIDTH, "Width", 10);
-    setOption(menu, EDITOR_MENU_START, "Create");
-    setOption(menu, EDITOR_MENU_QUIT, "Main menu");
-    selectVerticalOption(menu, EDITOR_MENU_CHOOSE_HEIGHT);
-    selectHorizontalOption(menu, MORE);
+void createMainMenu() {
+    destroyMenu();
+    createMenu(MAIN_MENU_OPTIONS);
+    setOption(MENU_START_GAME, "Play game");
+    setOption(MENU_EDITOR, "Editor");
+    setOption( MENU_QUIT, "Exit");
+    selectVerticalOption(MENU_START_GAME);
 }
 
-void createMenu(Menu *menu, int options) {
+void createMapEditorMenu() {
+    destroyMenu();
+    createMenu(EDITOR_MENU_OPTIONS);
+    setOptionWithValues(EDITOR_MENU_CHOOSE_HEIGHT, "Height", 10);
+    setOptionWithValues(EDITOR_MENU_CHOOSE_WIDTH, "Width", 10);
+    setOption(EDITOR_MENU_START, "Create");
+    setOption(EDITOR_MENU_QUIT, "Main menu");
+    selectVerticalOption(EDITOR_MENU_CHOOSE_HEIGHT);
+    selectHorizontalOption(MORE);
+}
+
+void createMapEditorPauseMenu() {
+    destroyMenu();
+    createMenu(EDITOR_MENU_OPTIONS);
+    setOption(EDITOR_PAUSE_SAVE, "Save");
+    setOption(EDITOR_PAUSE_CONTINUE, "Continue");
+    setOption(EDITOR_PAUSE_RESET, "Reset");
+    setOption(EDITOR_PAUSE_QUIT, "Main menu");
+    selectVerticalOption(EDITOR_PAUSE_CONTINUE);
+}
+
+void createMenu(int options) {
     menu = new Menu();
     menu->option = new string[options];
     menu->value = new int[options];
-    menu ->options = options;
+    menu->options = options;
 }
 
-void destroyMenu(Menu *menu) {
+void destroyMenu() {
     if (menu != nullptr) {
-        delete[] menu->option;
-        delete[] menu->value;
-        menu->options = 0;
+        if (menu->option != nullptr) {
+            delete[] menu->option;
+        }
+        if (menu->value != nullptr) {
+            delete[] menu->value;
+        }
         delete menu;
     }
 }
 
-void setOption(Menu *menu, int optionId, string name) {
+void setOption(int optionId, string name) {
     menu->option[optionId] = name;
     menu->value[optionId] = -1;
 }
 
-void setOptionWithValues(Menu *menu, int optionId, string name, int value) {
+void setOptionWithValues(int optionId, string name, int value) {
     menu->option[optionId] = name;
     menu->value[optionId] = value;
 }
 
-void displayMenu(Menu *menu, ALLEGRO_FONT *font) {
+void displayMenu() {
     ALLEGRO_COLOR HIGHLIGHT_COLOR = getMenuHighlightColor();
     ALLEGRO_COLOR NORMAL_COLOR = getMenuNormalColor();
     for (int option = 0; option < menu->options; option++) {
@@ -58,7 +80,7 @@ void displayMenu(Menu *menu, ALLEGRO_FONT *font) {
         ALLEGRO_COLOR color = menu->selectedVertically == option ? HIGHLIGHT_COLOR : NORMAL_COLOR;
 
         if (menu->value[option] >= 0 ) {
-            al_draw_text(font, color, lineX, lineY, ALLEGRO_ALIGN_RIGHT, menu->option[option].c_str());
+            al_draw_text(menuFont, color, lineX, lineY, ALLEGRO_ALIGN_RIGHT, menu->option[option].c_str());
             ALLEGRO_COLOR triangleColor =
                     menu->selectedVertically == option && menu->selectedHorizontally == LESS ? getArrowHighlightColor()
                                                                                              : color;
@@ -66,7 +88,7 @@ void displayMenu(Menu *menu, ALLEGRO_FONT *font) {
                                     SCREEN_WIDTH / 2 + 35, lineY + 15,
                                     SCREEN_WIDTH / 2 + 35, lineY + 35, triangleColor);
 
-            al_draw_textf(font, color, SCREEN_WIDTH / 2 + 60, lineY, ALLEGRO_ALIGN_CENTER, "%i", menu->value[option]);
+            al_draw_textf(menuFont, color, SCREEN_WIDTH / 2 + 60, lineY, ALLEGRO_ALIGN_CENTER, "%i", menu->value[option]);
 
             triangleColor =
                     menu->selectedVertically == option && menu->selectedHorizontally == MORE ? getArrowHighlightColor()
@@ -75,58 +97,58 @@ void displayMenu(Menu *menu, ALLEGRO_FONT *font) {
                                     SCREEN_WIDTH / 2 + 100, lineY + 25,
                                     SCREEN_WIDTH / 2 + 85, lineY + 35, triangleColor);
         } else {
-            al_draw_text(font, color, lineX, lineY, ALLEGRO_ALIGN_CENTER, menu->option[option].c_str());
+            al_draw_text(menuFont, color, lineX, lineY, ALLEGRO_ALIGN_CENTER, menu->option[option].c_str());
         }
     }
 }
 
-void setLowerOption(Menu *menu, int maxLength) {
+void setLowerOption(int maxLength) {
     int nextOption = (menu->selectedVertically + 1) % maxLength;
-    selectVerticalOption(menu, nextOption);
+    selectVerticalOption(nextOption);
 }
 
-void setHigherOption(Menu *menu, int maxLength) {
+void setHigherOption(int maxLength) {
     int nextOption = menu->selectedVertically - 1 < 0 ? maxLength - 1 : menu->selectedVertically - 1;
-    selectVerticalOption(menu, nextOption);
+    selectVerticalOption(nextOption);
 }
 
-void selectVerticalOption(Menu *menu, int optionId) {
+void selectVerticalOption(int optionId) {
     menu->selectedVertically = optionId;
 }
 
-int getSelectedOption(Menu *menu) {
+int getSelectedOption() {
     return menu->selectedVertically;
 }
 
-void selectHorizontalOption(Menu *menu, int option) {
+void selectHorizontalOption(int option) {
     menu->selectedHorizontally = option;
 }
 
-void setMoreOption(Menu *menu) {
+void setMoreOption() {
     if (menu->selectedHorizontally == MORE) {
-        increaseHorizontalOption(menu);
+        increaseHorizontalOption();
     } else {
-        selectHorizontalOption(menu, MORE);
+        selectHorizontalOption(MORE);
     }
 }
 
-void setLessOption(Menu *menu) {
+void setLessOption() {
     if (menu->selectedHorizontally == LESS) {
-        decreaseHorizontalOption(menu);
+        decreaseHorizontalOption();
     } else {
-        selectHorizontalOption(menu, LESS);
+        selectHorizontalOption(LESS);
     }
 }
 
-void increaseHorizontalOption(Menu *menu) {
-    modifyHorizontalOption(menu, 1);
+void increaseHorizontalOption() {
+    modifyHorizontalOption(1);
 }
 
-void decreaseHorizontalOption(Menu *menu) {
-    modifyHorizontalOption(menu, -1);
+void decreaseHorizontalOption() {
+    modifyHorizontalOption(-1);
 }
 
-void modifyHorizontalOption(Menu *menu, int value) {
+void modifyHorizontalOption(int value) {
     int option = menu->selectedVertically;
     int currentValue = menu->value[option];
 
@@ -135,10 +157,10 @@ void modifyHorizontalOption(Menu *menu, int value) {
     }
 }
 
-void maintainEnterInEditorMenu(Menu *menu) {
+void maintainEnterInEditorMenu() {
     if (menu->selectedHorizontally == LESS) {
-        decreaseHorizontalOption(menu);
+        decreaseHorizontalOption();
     } else {
-        increaseHorizontalOption(menu);
+        increaseHorizontalOption();
     }
 }

@@ -10,15 +10,10 @@
 #include <vector>
 const std::string MAPS_PATH = "../resources/maps/";
 const double FIELD_SPAN_RATIO = 0.05;
-enum FieldType{FIELD_BOMB, FIELD_EMPTY, FIELD_UNKNOWN, FIELD_FLAG, FIELD_WATER, FIELD_VIRGIN};
-const int MAP_FIELDS_TYPES = 6;
-
-struct MapColors {
-    ALLEGRO_COLOR *colors;
-};
-
+enum FieldCommand{COM_BOMB, COM_FLAG, COM_EMPTY, COM_VISIT};
 struct Field {
-    FieldType type;
+    bool isBomb;
+    bool isEmptySpace;
     bool wasVisited;
     bool isFlagged;
     int bombsInArea;
@@ -30,27 +25,37 @@ struct Map {
     int sizeY;
     int bombsLimit;
     int emptyFields;
-    int fieldSize;
-    std::string name;
 };
-void initializeColors(MapColors *palette);
-void destroyColors(MapColors *colors);
-bool persistMap(Map *map);
-bool loadMap(Map *map, ALLEGRO_DISPLAY * display, std::string path);
-void createFields(Map *map);
-void initializeEmptyMap(Map *map, int sizeX, int sizeY);
-void destroyMap(Map *map);
-void displayMap(Map *map);
-bool updateGameState(Map *map);
-void setFieldAsBomb(Map *map, int x, int y);
-void setFieldAsEmpty(Map *map, int x, int y);
-void setFieldAsUnknown(Map *map, int x, int y);
-void setFieldAsFlagged(Map *map, int x, int y);
-void setFieldAsVirgin(Map *map, int x, int y);
 
-void setFieldType(Map *map, int x, int y, FieldType type);
+extern Map *map;
+extern int fieldSize;
+extern int fieldWithSpanSize;
+extern int startX;
+extern int startY;
+extern int usedFlags;
 
-int getFieldSize(Map *map);
+void prepareMapToPersist();
+bool persistMap(ALLEGRO_DISPLAY * display);
+bool loadMap(ALLEGRO_DISPLAY * display, std::string path);
+void createFields();
+void initializeEmptyMap(int sizeX, int sizeY);
+void destroyMap();
+void displayMap();
+bool isGameFinished();
+void setFieldAsBomb(int x, int y);
+void setFieldAsEmpty(int x, int y);
+void setFieldAsUnknown(int x, int y);
+void setFieldAsFlagged(int x, int y);
+void setFieldAsVirgin(int x, int y);
+void setNextEditorState(Map *map, int x, int y);
+void increaseNearbyFieldsFlags(int currentX, int currentY);
+void decreaseNearbyFieldsFlags(int currentX, int currentY);
+void changeNearbyFieldsFlags(int currentX, int currentY, int value);
+void changeFieldValue(Field *field, int value);
+
+void changeClickedFieldState(ALLEGRO_EVENT *event);
+
+int getFieldSize();
 std::vector<Map> getAllMaps();
 
 

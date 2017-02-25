@@ -10,6 +10,7 @@
 using namespace std;
 enum MainMenuOption{MENU_START_GAME, MENU_EDITOR, MENU_QUIT};
 enum EditorMenuOption{EDITOR_MENU_CHOOSE_HEIGHT, EDITOR_MENU_CHOOSE_WIDTH, EDITOR_MENU_START, EDITOR_MENU_QUIT};
+enum EditorMenuPauseOption{EDITOR_PAUSE_SAVE, EDITOR_PAUSE_CONTINUE, EDITOR_PAUSE_RESET, EDITOR_PAUSE_QUIT};
 enum HorizontalOption{LESS, MORE};
 static const int MAIN_MENU_OPTIONS = 3;
 static const int EDITOR_MENU_OPTIONS = 4;
@@ -22,22 +23,28 @@ struct Menu {
     int options;
 };
 
-void createMainMenu(Menu *menu);
-void createMapEditorMenu(Menu *menu);
-void createMenu(Menu *menu, int options);
-void destroyMenu(Menu *menu);
-void setOption(Menu *menu, int optionId, string name);
-void setOptionWithValues(Menu *menu, int optionId, string name, int value);
-void displayMenu(Menu *menu, ALLEGRO_FONT *font);
-void setLowerOption(Menu *menu, int maxLength);
-void setHigherOption(Menu *menu, int maxLength);
-void setMoreOption(Menu *menu);
-void setLessOption(Menu *menu);
-void selectVerticalOption(Menu *menu, int optionId);
-void selectHorizontalOption(Menu *menu, int option);
-void increaseHorizontalOption(Menu *menu);
-void decreaseHorizontalOption(Menu *menu);
-void modifyHorizontalOption(Menu *menu, int value);
-void maintainEnterInEditorMenu(Menu *menu);
-int getSelectedOption(Menu *menu);
+extern Menu *menu;
+extern ALLEGRO_FONT *menuFont;
+void initializeMenuFont();
+void destroyMenuFont();
+
+void createMainMenu();
+void createMapEditorMenu();
+void createMapEditorPauseMenu();
+void createMenu(int options);
+void destroyMenu();
+void setOption(int optionId, string name);
+void setOptionWithValues(int optionId, string name, int value);
+void displayMenu();
+void setLowerOption(int maxLength);
+void setHigherOption(int maxLength);
+void setMoreOption();
+void setLessOption();
+void selectVerticalOption(int optionId);
+void selectHorizontalOption(int option);
+void increaseHorizontalOption();
+void decreaseHorizontalOption();
+void modifyHorizontalOption(int value);
+void maintainEnterInEditorMenu();
+int getSelectedOption();
 #endif //SAPPER_MENU_H
