@@ -8,6 +8,7 @@
 #include "Map.h"
 #include <algorithm>
 #include "../Player/Player.h"
+#include "../Menu/Menu.h"
 
 using namespace std;
 
@@ -39,7 +40,7 @@ bool persistMap(ALLEGRO_DISPLAY *display) {
         file << map->sizeX << " " << map->sizeY << " "
              << map->bombsLimit << " " << map->emptyFields << endl;
         for (int x = 0; x < map->sizeX; x++) {
-            for (int y = 0; x < map->sizeY; y++) {
+            for (int y = 0; y < map->sizeY; y++) {
                 file << map->fields[x][y].isEmptySpace << " "
                      << map->fields[x][y].isBomb << " "
                      << map->fields[x][y].bombsInArea << endl;
@@ -51,6 +52,13 @@ bool persistMap(ALLEGRO_DISPLAY *display) {
     return true;
 }
 
+bool selectMap(bool isCustom, ALLEGRO_DISPLAY *display) {
+    if (!isCustom) {
+        return loadMap(display, getSelectedOptionName());
+    } else {
+        return loadMap(display, "");
+    }
+}
 
 bool loadMap(ALLEGRO_DISPLAY * display, string path) {
     if (!al_init_native_dialog_addon()) return NULL;
@@ -58,16 +66,19 @@ bool loadMap(ALLEGRO_DISPLAY * display, string path) {
     if (path.compare("") == 0) {
         ALLEGRO_FILECHOOSER *filechooser =
                 al_create_native_file_dialog(MAPS_PATH.c_str(), "Load map.", "*.map", ALLEGRO_FILECHOOSER_FILE_MUST_EXIST);
-        if (!al_show_native_file_dialog(display, filechooser)) return false;
-        if (!al_get_native_file_dialog_count(filechooser) > 0)
+        if (!al_show_native_file_dialog(display, filechooser))
+            return false;
+        if (al_get_native_file_dialog_count(filechooser) > 0)
             path = al_get_native_file_dialog_path(filechooser, 0);
         else return false;
+    } else {
+        path = MAPS_PATH + path + ".map";
     }
 
     fstream file;
     file.open(path, ios::in);
     if (!file.good()) return false;
-    map = new Map;
+    map = new Map();
     map->sizeX = getCord(&file);
     map->sizeY = getCord(&file);
     map->bombsLimit = getCord(&file);
@@ -79,6 +90,7 @@ bool loadMap(ALLEGRO_DISPLAY * display, string path) {
         delete map;
         return false;
     }
+    createFields();
     for (int x = 0; x < map->sizeX; x++) {
         for (int y = 0; y < map->sizeY; y++) {
             map->fields[x][y].wasVisited = false;
@@ -106,6 +118,7 @@ void createFields() {
 }
 
 void initializeEmptyMap(int sizeX, int sizeY) {
+    destroyMap();
     map = new Map();
     usedFlags = 0;
     map->sizeX = sizeX;
@@ -198,8 +211,8 @@ bool isGameFinished() {
                 checkedFields++;
             }
         }
-        return checkedFields >= map->sizeX * map->sizeY - map->emptyFields;
     }
+    return checkedFields >= map->sizeX * map->sizeY - map->emptyFields;
 }
 
 
@@ -230,7 +243,7 @@ void checkIfWasEmptyBefore(int x, int y) {
     }
 }
 
-void checkIfWasFlagedBefore(int x, int y) {
+void checkIfWasFlaggedBefore(int x, int y) {
     if (map->fields[x][y].isFlagged) {
         usedFlags--;
     }
@@ -239,7 +252,7 @@ void checkIfWasFlagedBefore(int x, int y) {
 void cleanFieldState(int x, int y) {
     checkIfWasBombBefore(x, y);
     checkIfWasEmptyBefore(x, y);
-    checkIfWasFlagedBefore(x, y);
+    checkIfWasFlaggedBefore(x, y);
 }
 
 //void setFieldType(int x, int y, FieldType type){
@@ -262,7 +275,7 @@ void setFieldAsUnknown(int x, int y) {
     cleanFieldState(x, y);
 }
 void setFieldAsFlagged(int x, int y) {
-    checkIfWasFlagedBefore(x, y);
+    checkIfWasFlaggedBefore(x, y);
     map->fields[x][y].isFlagged = true;
     usedFlags++;
 }
@@ -317,19 +330,23 @@ void changeClickedFieldState(ALLEGRO_EVENT *event) {
     }
 }
 void setNextEditorState(Map *map, int x, int y) {
-
     Field &field = map->fields[x][y];
     if (field.isEmptySpace) {
         field.isEmptySpace = false;
+        map->emptyFields--;
     } else if (!field.isBomb) {
         field.isBomb = true;
+        map->bombsLimit++;
     } else if (field.isBomb) {
         field.isEmptySpace = true;
+        map->emptyFields++;
         field.isBomb = false;
+        map->bombsLimit--;
     }
 }
 
 void prepareMapToPersist() {
+    setBombsLimit(true);
     for (int x = 0; x < map->sizeX; x++) {
         for (int y = 0; y< map->sizeY; y++) {
             if (map->fields[x][y].isEmptySpace) {
@@ -343,6 +360,9 @@ void prepareMapToPersist() {
     }
 }
 
-
-
-
+void setBombsLimit(bool isSaveState) {
+    int bombsLimitFromMenu = getBombsLimitFromMenu(isSaveState);
+    if (bombsLimitFromMenu > map->bombsLimit) {
+        map->bombsLimit = bombsLimitFromMenu;
+    }
+}

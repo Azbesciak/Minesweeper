@@ -23,7 +23,14 @@ GameState maintainMapEditorMenu(ALLEGRO_EVENT *event);
 
 GameState maintainMapEditor(ALLEGRO_EVENT *event);
 
-GameState maintainEditorPauseMenu(ALLEGRO_EVENT *event, ALLEGRO_DISPLAY *display);
+GameState maintainEditorPauseMenu(ALLEGRO_EVENT *event);
+
+GameState maintainSaveMapMenu(ALLEGRO_EVENT *event, ALLEGRO_DISPLAY *display);
+
+GameState maintainSelectMapState(ALLEGRO_EVENT *event, ALLEGRO_DISPLAY *display);
+
+GameState maintainSelectDifficultyState(ALLEGRO_EVENT *event);
+
 
 int main(int argc, char **argv) {
     ALLEGRO_DISPLAY *display = NULL;
@@ -85,7 +92,16 @@ int main(int argc, char **argv) {
                 gameState = maintainMapEditor(&event);
                 break;
             case STATE_EDITOR_PAUSE:
-                gameState = maintainEditorPauseMenu(&event, display);
+                gameState = maintainEditorPauseMenu(&event);
+                break;
+            case STATE_SAVE_MAP:
+                gameState = maintainSaveMapMenu(&event, display);
+                break;
+            case STATE_SELECT_MAP:
+                gameState = maintainSelectMapState(&event, display);
+                break;
+            case STATE_SELECT_DIFFICULTY:
+                gameState = maintainSelectDifficultyState(&event);
                 break;
             default: gameOver = true;
         }
@@ -106,15 +122,21 @@ int main(int argc, char **argv) {
                     }
                      createMapEditorMenu(); break;
                 case STATE_EDITOR:
-                    destroyMap();
                     showMouse(display);
                     if (temp != STATE_EDITOR_PAUSE) {
-                        initializeEmptyMap(menu->value[EDITOR_MENU_CHOOSE_WIDTH], menu->value[EDITOR_MENU_CHOOSE_HEIGHT]);
+                        initializeEmptyMap(menu->option[EDITOR_MENU_CHOOSE_WIDTH].value,
+                                           menu->option[EDITOR_MENU_CHOOSE_HEIGHT].value);
                     }
                     break;
                 case STATE_EDITOR_PAUSE:
                     hideMouse(display);
                     createMapEditorPauseMenu(); break;
+                case STATE_SAVE_MAP:
+                    createSaveMapMenu();break;
+                case STATE_SELECT_MAP:
+                    createSelectMapMenu(); break;
+                case STATE_SELECT_DIFFICULTY:
+                    createLevelDifficultyMenu(); break;
                 default: gameOver = true;
             }
         }
@@ -150,7 +172,7 @@ GameState maintainMainMenuState(ALLEGRO_EVENT *event) {
                 int option = getSelectedOption();
                 switch (option) {
                     case MENU_QUIT: gameOver = true; break;
-                    case MENU_START_GAME: return STATE_SELECT_MODE;
+                    case MENU_START_GAME: return STATE_SELECT_MAP;
                     case MENU_EDITOR: return STATE_EDITOR_MENU;
                     default : break;
                 }
@@ -177,7 +199,8 @@ GameState maintainMapEditorMenu(ALLEGRO_EVENT *event) {
                 switch (option) {
                     case EDITOR_MENU_START: return STATE_EDITOR;
                     case EDITOR_MENU_CHOOSE_HEIGHT:
-                    case EDITOR_MENU_CHOOSE_WIDTH: maintainEnterInEditorMenu(); break;
+                    case EDITOR_MENU_CHOOSE_WIDTH:
+                        maintainEnterHorizontalOption(); break;
                     default : return STATE_MAIN_MENU;
                 }
                 break;
@@ -199,7 +222,7 @@ GameState maintainMapEditor(ALLEGRO_EVENT *event) {
     return STATE_EDITOR;
 }
 
-GameState maintainEditorPauseMenu(ALLEGRO_EVENT *event, ALLEGRO_DISPLAY *display) {
+GameState maintainEditorPauseMenu(ALLEGRO_EVENT *event) {
    if (event->type == ALLEGRO_EVENT_KEY_DOWN) {
         switch (event->keyboard.keycode) {
             case ALLEGRO_KEY_DOWN : setLowerOption(EDITOR_MENU_OPTIONS); break;
@@ -209,10 +232,7 @@ GameState maintainEditorPauseMenu(ALLEGRO_EVENT *event, ALLEGRO_DISPLAY *display
                 int option = getSelectedOption();
                 switch (option) {
                     case EDITOR_PAUSE_CONTINUE: return STATE_EDITOR;
-                    case EDITOR_PAUSE_SAVE: {
-                        bool wasPersisted = persistMap(display);
-                        return STATE_EDITOR_MENU;
-                    }
+                    case EDITOR_PAUSE_SAVE: return STATE_SAVE_MAP;
                     case EDITOR_PAUSE_RESET: return STATE_EDITOR_MENU;
                     default : return STATE_MAIN_MENU;
                 }
@@ -223,6 +243,95 @@ GameState maintainEditorPauseMenu(ALLEGRO_EVENT *event, ALLEGRO_DISPLAY *display
     displayMenu();
     return STATE_EDITOR_PAUSE;
 }
+
+GameState maintainSaveMapMenu(ALLEGRO_EVENT *event, ALLEGRO_DISPLAY *display) {
+    if (event->type == ALLEGRO_EVENT_KEY_DOWN) {
+        switch (event->keyboard.keycode) {
+            case ALLEGRO_KEY_DOWN : setLowerOption(SAVE_MAP_OPTIONS); break;
+            case ALLEGRO_KEY_UP: setHigherOption(SAVE_MAP_OPTIONS); break;
+            case ALLEGRO_KEY_LEFT: setLessOption(); break;
+            case ALLEGRO_KEY_RIGHT: setMoreOption(); break;
+            case ALLEGRO_KEY_ESCAPE: return STATE_EDITOR_PAUSE;
+            case ALLEGRO_KEY_ENTER: {
+                int option = getSelectedOption();
+                switch (option) {
+                    case SAVE_BOMBS_LIMIT: maintainEnterHorizontalOption();break;
+
+                    case SAVE_SAVE: {
+                        bool wasPersisted = persistMap(display);
+                        if (wasPersisted) cout << "map persisted" <<endl;
+                        else cout << "not persisted" << endl;
+                        return STATE_EDITOR_MENU;
+                    }
+                    case SAVE_QUIT: return STATE_EDITOR_PAUSE;
+                    default : return STATE_MAIN_MENU;
+                }
+                break;
+            }
+            default : break;
+        }
+    }
+    displayMenu();
+    return STATE_SAVE_MAP;
+}
+
+GameState maintainSelectMapState(ALLEGRO_EVENT *event, ALLEGRO_DISPLAY *display) {
+    if (event->type == ALLEGRO_EVENT_KEY_DOWN) {
+        switch (event->keyboard.keycode) {
+            case ALLEGRO_KEY_DOWN : setLowerOption(SELECT_MAP_OPTIONS); break;
+            case ALLEGRO_KEY_UP: setHigherOption(SELECT_MAP_OPTIONS); break;
+            case ALLEGRO_KEY_ESCAPE: return STATE_MAIN_MENU;
+            case ALLEGRO_KEY_ENTER: {
+                int option = getSelectedOption();
+                bool isCustom = false;
+                bool isSelected;
+                switch (option) {
+                    case SELECT_CUSTOM:
+                        isCustom = true;
+                    case SELECT_10X10: case SELECT_25X25: case SELECT_50X50: {
+                        isSelected = selectMap(isCustom, display);
+                        if (isSelected) {
+                            cout << "map selected" <<endl;
+                            return STATE_SELECT_DIFFICULTY;
+                        } else {
+                            cout<<"map NOT selected" <<endl;
+                            return STATE_SELECT_MAP;
+                        }
+                    }
+                    case SELECT_BACK:
+                    default : return STATE_MAIN_MENU;
+                }
+            }
+            default : break;
+        }
+    }
+    displayMenu();
+    return STATE_SELECT_MAP;
+}
+
+GameState maintainSelectDifficultyState(ALLEGRO_EVENT *event) {
+    if (event->type == ALLEGRO_EVENT_KEY_DOWN) {
+        switch (event->keyboard.keycode) {
+            case ALLEGRO_KEY_DOWN : setLowerOption(LEVEL_DIFFICULTY_OPTIONS); break;
+            case ALLEGRO_KEY_UP: setHigherOption(LEVEL_DIFFICULTY_OPTIONS); break;
+            case ALLEGRO_KEY_ESCAPE: return STATE_MAIN_MENU;
+            case ALLEGRO_KEY_ENTER: {
+                int option = getSelectedOption();
+                switch (option) {
+                    case DIF_EASY: case DIF_NORMAL: case DIF_HARD: case DIF_CUSTOM:
+                        setBombsLimit(false);
+                        return STATE_GAME;
+                    case DIF_QUIT: return STATE_SELECT_MAP;
+                    default : return STATE_MAIN_MENU;
+                }
+            }
+            default : break;
+        }
+    }
+    displayMenu();
+    return STATE_SELECT_DIFFICULTY;
+}
+
 
 void hideMouse(ALLEGRO_DISPLAY *display) {
     al_hide_mouse_cursor(display);

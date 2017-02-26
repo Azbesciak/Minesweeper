@@ -24,8 +24,8 @@ void createMainMenu() {
 void createMapEditorMenu() {
     destroyMenu();
     createMenu(EDITOR_MENU_OPTIONS);
-    setOptionWithValues(EDITOR_MENU_CHOOSE_HEIGHT, "Height", 10);
-    setOptionWithValues(EDITOR_MENU_CHOOSE_WIDTH, "Width", 10);
+    setVariableOption(EDITOR_MENU_CHOOSE_HEIGHT, "Height", 10, MIN_FIELDS, MAX_FIELDS);
+    setVariableOption(EDITOR_MENU_CHOOSE_WIDTH, "Width", 10, MIN_FIELDS, MAX_FIELDS);
     setOption(EDITOR_MENU_START, "Create");
     setOption(EDITOR_MENU_QUIT, "Main menu");
     selectVerticalOption(EDITOR_MENU_CHOOSE_HEIGHT);
@@ -42,10 +42,46 @@ void createMapEditorPauseMenu() {
     selectVerticalOption(EDITOR_PAUSE_CONTINUE);
 }
 
+void createLevelDifficultyMenu() {
+    destroyMenu();
+    createMenu(LEVEL_DIFFICULTY_OPTIONS);
+    setOption(DIF_EASY, "Easy (10%)", 10);
+    setOption(DIF_NORMAL, "Normal (20%)", 20);
+    setOption(DIF_HARD, "Hard (30%)", 30);
+    setOption(DIF_CUSTOM, "Map difficulty");
+    setOption(DIF_QUIT, "Back");
+    selectVerticalOption(DIF_EASY);
+    selectHorizontalOption(MORE);
+}
+
+void createSaveMapMenu() {
+    destroyMenu();
+    createMenu(SAVE_MAP_OPTIONS);
+    int availableFields = map->sizeX * map->sizeY - map->emptyFields;
+    int minPercentage = (int)(map->bombsLimit * 100 /(double)availableFields);
+    int maxPercentage = 99;
+    int currentValue = max(15, minPercentage);
+    setVariableOption(SAVE_BOMBS_LIMIT, "Bombs limit (%)", currentValue, minPercentage, maxPercentage);
+    setOption(SAVE_SAVE, "Save");
+    setOption(SAVE_QUIT, "Back");
+    selectVerticalOption(SAVE_BOMBS_LIMIT);
+    selectHorizontalOption(MORE);
+}
+
+void createSelectMapMenu() {
+    destroyMenu();
+    createMenu(SELECT_MAP_OPTIONS);
+    setOption(SELECT_10X10, "10X10");
+    setOption(SELECT_25X25, "25X10");
+    setOption(SELECT_50X50, "50X50");
+    setOption(SELECT_CUSTOM, "Custom");
+    setOption(SELECT_BACK, "Back");
+    selectVerticalOption(SELECT_10X10);
+}
+
 void createMenu(int options) {
     menu = new Menu();
-    menu->option = new string[options];
-    menu->value = new int[options];
+    menu->option = new MenuOption[options];
     menu->options = options;
 }
 
@@ -54,21 +90,30 @@ void destroyMenu() {
         if (menu->option != nullptr) {
             delete[] menu->option;
         }
-        if (menu->value != nullptr) {
-            delete[] menu->value;
-        }
         delete menu;
     }
 }
 
-void setOption(int optionId, string name) {
-    menu->option[optionId] = name;
-    menu->value[optionId] = -1;
+void setOption(int optionId, string title) {
+    MenuOption &option = menu->option[optionId];
+    option.title = title;
+    option.value = -1;
+    option.isChoice = false;
+}
+void setOption(int optionId, string title, int value) {
+    MenuOption &option = menu->option[optionId];
+    option.title = title;
+    option.value = value;
+    option.isChoice = false;
 }
 
-void setOptionWithValues(int optionId, string name, int value) {
-    menu->option[optionId] = name;
-    menu->value[optionId] = value;
+void setVariableOption(int optionId, string title, int value, int min, int max) {
+    MenuOption &option = menu->option[optionId];
+    option.title = title;
+    option.value = value;
+    option.minValue = min;
+    option.maxValue = max;
+    option.isChoice = true;
 }
 
 void displayMenu() {
@@ -79,8 +124,8 @@ void displayMenu() {
         int lineY = SCREEN_HEIGHT / 2 + option * MENU_ITEM_HEIGHT - (int)(menu->options / 2.0 * MENU_ITEM_HEIGHT);
         ALLEGRO_COLOR color = menu->selectedVertically == option ? HIGHLIGHT_COLOR : NORMAL_COLOR;
 
-        if (menu->value[option] >= 0 ) {
-            al_draw_text(menuFont, color, lineX, lineY, ALLEGRO_ALIGN_RIGHT, menu->option[option].c_str());
+        if (menu->option[option].isChoice) {
+            al_draw_text(menuFont, color, lineX, lineY, ALLEGRO_ALIGN_RIGHT, menu->option[option].title.c_str());
             ALLEGRO_COLOR triangleColor =
                     menu->selectedVertically == option && menu->selectedHorizontally == LESS ? getArrowHighlightColor()
                                                                                              : color;
@@ -88,7 +133,7 @@ void displayMenu() {
                                     SCREEN_WIDTH / 2 + 35, lineY + 15,
                                     SCREEN_WIDTH / 2 + 35, lineY + 35, triangleColor);
 
-            al_draw_textf(menuFont, color, SCREEN_WIDTH / 2 + 60, lineY, ALLEGRO_ALIGN_CENTER, "%i", menu->value[option]);
+            al_draw_textf(menuFont, color, SCREEN_WIDTH / 2 + 60, lineY, ALLEGRO_ALIGN_CENTER, "%i", menu->option[option].value);
 
             triangleColor =
                     menu->selectedVertically == option && menu->selectedHorizontally == MORE ? getArrowHighlightColor()
@@ -97,7 +142,7 @@ void displayMenu() {
                                     SCREEN_WIDTH / 2 + 100, lineY + 25,
                                     SCREEN_WIDTH / 2 + 85, lineY + 35, triangleColor);
         } else {
-            al_draw_text(menuFont, color, lineX, lineY, ALLEGRO_ALIGN_CENTER, menu->option[option].c_str());
+            al_draw_text(menuFont, color, lineX, lineY, ALLEGRO_ALIGN_CENTER, menu->option[option].title.c_str());
         }
     }
 }
@@ -150,17 +195,33 @@ void decreaseHorizontalOption() {
 
 void modifyHorizontalOption(int value) {
     int option = menu->selectedVertically;
-    int currentValue = menu->value[option];
+    MenuOption &menuOption = menu->option[option];
+    int currentValue = menuOption.value;
 
-    if (currentValue + value <= MAX_FIELDS && currentValue + value >= MIN_FIELDS) {
-        menu->value[option] = currentValue + value;
+    if (currentValue + value <= menuOption.maxValue &&
+            currentValue + value >= menuOption.minValue) {
+        menuOption.value += value;
     }
 }
 
-void maintainEnterInEditorMenu() {
+void maintainEnterHorizontalOption() {
     if (menu->selectedHorizontally == LESS) {
         decreaseHorizontalOption();
     } else {
         increaseHorizontalOption();
     }
+}
+
+int getBombsLimitFromMenu(bool isSaveState) {
+    int stateId = isSaveState ? SAVE_BOMBS_LIMIT : menu->selectedVertically;
+    if (menu != nullptr) {
+        int userSelectedBombAmount = (int) ((menu->option[stateId].value / 100.0) *
+                                     (map->sizeX * map->sizeY - map->emptyFields));
+        return max(userSelectedBombAmount, map->bombsLimit);
+    }
+    return -1;
+}
+
+string getSelectedOptionName() {
+    return menu->option[menu->selectedVertically].title;
 }
