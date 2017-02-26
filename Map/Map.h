@@ -8,7 +8,7 @@
 #include <allegro5/allegro5.h>
 #include <string>
 #include <vector>
-const std::string MAPS_PATH = "../resources/maps/";//"../../resources/maps/";
+const std::string MAPS_PATH = "../resources/maps/";
 const double FIELD_SPAN_RATIO = 0.05;
 enum FieldCommand{COM_BOMB, COM_FLAG, COM_EMPTY, COM_VISIT};
 struct Field {
@@ -42,6 +42,7 @@ void createFields();
 void initializeEmptyMap(int sizeX, int sizeY);
 void destroyMap();
 void displayMap();
+void updateGame(ALLEGRO_EVENT *event);
 bool isGameFinished();
 void setBombsLimit(bool isSaveState);
 void setFieldAsBomb(int x, int y);

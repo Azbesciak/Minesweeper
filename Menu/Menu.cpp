@@ -79,6 +79,13 @@ void createSelectMapMenu() {
     selectVerticalOption(SELECT_10X10);
 }
 
+void createGamePauseMenu() {
+    destroyMenu();
+    createMenu(GAME_PAUSE_OPTIONS);
+    setOption(GAME_PAUSE_CONTINUE, "Continue");
+    setOption(GAME_PAUSE_QUIT, "Main menu");
+    selectVerticalOption(GAME_PAUSE_CONTINUE);
+}
 void createMenu(int options) {
     menu = new Menu();
     menu->option = new MenuOption[options];

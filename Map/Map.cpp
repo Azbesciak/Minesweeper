@@ -19,11 +19,15 @@ int startX;
 int startY;
 int usedFlags = 0;
 
-
+// private
 int getCord(fstream *file) ;
 void drawField(int startX, int startY, int x, int y, Field *field, int fieldWithSpanSize);
 void drawPlayer(Player *player, int startX, int startY, int fieldWithSpanSize);
+ALLEGRO_COLOR getFieldColor(Field *field);
 
+void initializeMapProperties();
+
+// implementation
 bool persistMap(ALLEGRO_DISPLAY *display) {
     prepareMapToPersist();
     string target = MAPS_PATH +"new.map";
@@ -78,6 +82,7 @@ bool loadMap(ALLEGRO_DISPLAY * display, string path) {
     fstream file;
     file.open(path, ios::in);
     if (!file.good()) return false;
+    destroyMap();
     map = new Map();
     map->sizeX = getCord(&file);
     map->sizeY = getCord(&file);
@@ -90,6 +95,7 @@ bool loadMap(ALLEGRO_DISPLAY * display, string path) {
         delete map;
         return false;
     }
+    initializeMapProperties();
     createFields();
     for (int x = 0; x < map->sizeX; x++) {
         for (int y = 0; y < map->sizeY; y++) {
@@ -117,16 +123,19 @@ void createFields() {
     }
 }
 
-void initializeEmptyMap(int sizeX, int sizeY) {
-    destroyMap();
-    map = new Map();
-    usedFlags = 0;
-    map->sizeX = sizeX;
-    map->sizeY = sizeY;
+void initializeMapProperties() {
     fieldSize = getFieldSize();
+    usedFlags = 0;
     fieldWithSpanSize = (int)(fieldSize / (1 - FIELD_SPAN_RATIO));
     startX = (int)((SCREEN_WIDTH - (fieldWithSpanSize * map ->sizeX)) / 2.0);
     startY = (int)((SCREEN_HEIGHT - (fieldWithSpanSize* map ->sizeY)) / 2.0);
+}
+void initializeEmptyMap(int sizeX, int sizeY) {
+    destroyMap();
+    map = new Map();
+    map->sizeX = sizeX;
+    map->sizeY = sizeY;
+    initializeMapProperties();
     createFields();
     for (int x = 0; x < sizeX; x++) {
         for (int y = 0; y < sizeY; y++) {
@@ -160,8 +169,11 @@ void displayMap() {
         }
     }
 }
+void updateGame(ALLEGRO_EVENT *event){
 
-ALLEGRO_COLOR getFieldColor(Field *field);
+}
+
+
 
 void drawField(int startX, int startY, int x, int y, Field *field, int fieldWithSpanSize) {
     int emptyPlace = max((int)(fieldWithSpanSize * (FIELD_SPAN_RATIO) / 2.0), 1);

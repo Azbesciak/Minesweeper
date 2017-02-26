@@ -31,6 +31,9 @@ GameState maintainSelectMapState(ALLEGRO_EVENT *event, ALLEGRO_DISPLAY *display)
 
 GameState maintainSelectDifficultyState(ALLEGRO_EVENT *event);
 
+GameState maintainGame(ALLEGRO_EVENT *event);
+
+GameState maintainGamePauseMenu(ALLEGRO_EVENT *event);
 
 int main(int argc, char **argv) {
     ALLEGRO_DISPLAY *display = NULL;
@@ -103,6 +106,12 @@ int main(int argc, char **argv) {
             case STATE_SELECT_DIFFICULTY:
                 gameState = maintainSelectDifficultyState(&event);
                 break;
+            case STATE_GAME:
+                gameState = maintainGame(&event);
+                break;
+            case STATE_GAME_PAUSE:
+                gameState = maintainGamePauseMenu(&event);
+                break;
             default: gameOver = true;
         }
 
@@ -137,6 +146,13 @@ int main(int argc, char **argv) {
                     createSelectMapMenu(); break;
                 case STATE_SELECT_DIFFICULTY:
                     createLevelDifficultyMenu(); break;
+                case STATE_GAME:
+                    showMouse(display);
+                    break;
+                case STATE_GAME_PAUSE:
+                    hideMouse(display);
+                    createGamePauseMenu();
+                    break;
                 default: gameOver = true;
             }
         }
@@ -332,6 +348,35 @@ GameState maintainSelectDifficultyState(ALLEGRO_EVENT *event) {
     return STATE_SELECT_DIFFICULTY;
 }
 
+GameState maintainGame(ALLEGRO_EVENT *event) {
+    if (event->keyboard.keycode == ALLEGRO_KEY_ESCAPE && event->type == ALLEGRO_EVENT_KEY_DOWN) {
+        return STATE_GAME_PAUSE;
+    } else if (event->type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN) {
+        changeClickedFieldState(event);
+    }
+    displayMap();
+    return STATE_GAME;
+}
+GameState maintainGamePauseMenu(ALLEGRO_EVENT *event) {
+    if (event->type == ALLEGRO_EVENT_KEY_DOWN) {
+        switch (event->keyboard.keycode) {
+            case ALLEGRO_KEY_DOWN : setLowerOption(GAME_PAUSE_OPTIONS); break;
+            case ALLEGRO_KEY_UP: setHigherOption(GAME_PAUSE_OPTIONS); break;
+            case ALLEGRO_KEY_ESCAPE: return STATE_MAIN_MENU;
+            case ALLEGRO_KEY_ENTER: {
+                int option = getSelectedOption();
+                switch (option) {
+                    case GAME_PAUSE_CONTINUE: return STATE_GAME;
+                    case GAME_PAUSE_QUIT:
+                    default : return STATE_MAIN_MENU;
+                }
+            }
+            default : break;
+        }
+    }
+    displayMenu();
+    return STATE_GAME_PAUSE;
+}
 
 void hideMouse(ALLEGRO_DISPLAY *display) {
     al_hide_mouse_cursor(display);
