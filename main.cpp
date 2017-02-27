@@ -31,9 +31,9 @@ GameState maintainSelectMapState(ALLEGRO_EVENT *event, ALLEGRO_DISPLAY *display)
 
 GameState maintainSelectDifficultyState(ALLEGRO_EVENT *event);
 
-GameState maintainGame(ALLEGRO_EVENT *event);
+GameState maintainGameState(ALLEGRO_EVENT *event);
 
-GameState maintainGamePauseMenu(ALLEGRO_EVENT *event);
+GameState maintainGamePauseMenuState(ALLEGRO_EVENT *event);
 
 int main(int argc, char **argv) {
     ALLEGRO_DISPLAY *display = NULL;
@@ -107,10 +107,10 @@ int main(int argc, char **argv) {
                 gameState = maintainSelectDifficultyState(&event);
                 break;
             case STATE_GAME:
-                gameState = maintainGame(&event);
+                gameState = maintainGameState(&event);
                 break;
             case STATE_GAME_PAUSE:
-                gameState = maintainGamePauseMenu(&event);
+                gameState = maintainGamePauseMenuState(&event);
                 break;
             default: gameOver = true;
         }
@@ -147,6 +147,9 @@ int main(int argc, char **argv) {
                 case STATE_SELECT_DIFFICULTY:
                     createLevelDifficultyMenu(); break;
                 case STATE_GAME:
+                    if (temp == STATE_SELECT_DIFFICULTY) {
+                        resetScore();
+                    }
                     showMouse(display);
                     break;
                 case STATE_GAME_PAUSE:
@@ -232,9 +235,9 @@ GameState maintainMapEditor(ALLEGRO_EVENT *event) {
         if (event->keyboard.keycode == ALLEGRO_KEY_ESCAPE && event->type == ALLEGRO_EVENT_KEY_DOWN) {
             return STATE_EDITOR_PAUSE;
         } else if (event->type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN) {
-            changeClickedFieldState(event);
+            maintainEditor(event);
         }
-        displayMap();
+        displayMap(false);
     return STATE_EDITOR;
 }
 
@@ -348,16 +351,16 @@ GameState maintainSelectDifficultyState(ALLEGRO_EVENT *event) {
     return STATE_SELECT_DIFFICULTY;
 }
 
-GameState maintainGame(ALLEGRO_EVENT *event) {
+GameState maintainGameState(ALLEGRO_EVENT *event) {
     if (event->keyboard.keycode == ALLEGRO_KEY_ESCAPE && event->type == ALLEGRO_EVENT_KEY_DOWN) {
         return STATE_GAME_PAUSE;
     } else if (event->type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN) {
-        changeClickedFieldState(event);
+        maintainGame(event);
     }
-    displayMap();
+    displayMap(true);
     return STATE_GAME;
 }
-GameState maintainGamePauseMenu(ALLEGRO_EVENT *event) {
+GameState maintainGamePauseMenuState(ALLEGRO_EVENT *event) {
     if (event->type == ALLEGRO_EVENT_KEY_DOWN) {
         switch (event->keyboard.keycode) {
             case ALLEGRO_KEY_DOWN : setLowerOption(GAME_PAUSE_OPTIONS); break;

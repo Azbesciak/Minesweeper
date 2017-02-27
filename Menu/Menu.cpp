@@ -6,7 +6,7 @@
 Menu *menu = nullptr;
 ALLEGRO_FONT *menuFont = nullptr;
 void initializeMenuFont() {
-    menuFont = al_load_font("../pricedown bl.ttf", 36, 0);
+    menuFont = al_load_font((FONT_PATH + MAIN_FONT).c_str(), 36, 0);
 }
 void destroyMenuFont() {
     al_destroy_font(menuFont);
@@ -17,7 +17,7 @@ void createMainMenu() {
     createMenu(MAIN_MENU_OPTIONS);
     setOption(MENU_START_GAME, "Play game");
     setOption(MENU_EDITOR, "Editor");
-    setOption( MENU_QUIT, "Exit");
+    setOption(MENU_QUIT, "Exit");
     selectVerticalOption(MENU_START_GAME);
 }
 

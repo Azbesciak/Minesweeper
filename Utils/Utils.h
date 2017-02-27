@@ -2,7 +2,7 @@
 #define SAPPER_UTILS_H
 
 #include <allegro5/color.h>
-
+#include <string>
 
 enum Key {
     UP, DOWN, LEFT, RIGHT, SPACE, ENTER, ESC
@@ -28,6 +28,8 @@ const int MAX_FIELDS = 100;
 const int MIN_FIELDS = 5;
 const double FPS = 24.0;
 const double MARGIN_RATIO = 0.05;
+const std::string FONT_PATH = "../resources/fonts/";
+const std::string MAIN_FONT = "pricedown bl.ttf";
 
 struct Point {
     int x;
