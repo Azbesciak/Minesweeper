@@ -19,6 +19,7 @@ int startX;
 int startY;
 int usedFlags = 0;
 int score = 0;
+int timer = 0;
 bool isGame = false;
 ALLEGRO_FONT *fieldsFont = nullptr;
 ALLEGRO_FONT *statsFont = nullptr;
@@ -145,7 +146,7 @@ void initializeMapProperties() {
     startY = (int)((SCREEN_HEIGHT - (fieldWithSpanSize* map ->sizeY)) / 2.0);
 //    const char *fontPath = (FONT_PATH + MAIN_FONT).c_str();
     fieldsFont = al_load_font((FONT_PATH + MAIN_FONT).c_str(), (int)(fieldSize * 0.8), 0);
-    statsFont = al_load_font(((FONT_PATH + MAIN_FONT).c_str()), (int)(startY * 0.8), 0);
+    statsFont = al_load_font(((FONT_PATH + MAIN_FONT).c_str()), 36, 0);
 }
 
 void destroyMapProperties() {
@@ -445,13 +446,23 @@ void initializeBombsIfNeed(int clickX, int clickY) {
         }
     }
 }
+void resetTimer() {
+    timer = 0;
+}
 
-
+void incrementTimer() {
+    timer++;
+}
 void drawStats(bool isGame) {
     const int textVerticalPosition = (int)(min(startY, startX) * 0.06);
     if (isGame) {
+
+        al_draw_textf(statsFont, getColor(COLOR_NORMAL), 10, textVerticalPosition,
+                      ALLEGRO_ALIGN_LEFT, "Score : %i", score);
+        al_draw_textf(statsFont, getColor(COLOR_HIGHLIGHT), SCREEN_WIDTH / 2, textVerticalPosition,
+                      ALLEGRO_ALIGN_CENTER, "%i : %i", timer / (int)(FPS * 60), int(timer / FPS) % 60);
         al_draw_textf(statsFont, getColor(COLOR_NORMAL), SCREEN_WIDTH - 10, textVerticalPosition,
-                      ALLEGRO_ALIGN_RIGHT, "Available flags : %i", map->bombsLimit - usedFlags);
+                      ALLEGRO_ALIGN_RIGHT, "Flags : %i", map->bombsLimit - usedFlags);
     } else {
         al_draw_textf(statsFont, getColor(COLOR_BOMB), SCREEN_WIDTH - 10, textVerticalPosition,
                       ALLEGRO_ALIGN_RIGHT, "Bombs set : %i", map->bombsLimit);

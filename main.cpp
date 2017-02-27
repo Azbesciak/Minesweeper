@@ -149,6 +149,7 @@ int main(int argc, char **argv) {
                 case STATE_GAME:
                     if (temp == STATE_SELECT_DIFFICULTY) {
                         resetScore();
+                        resetTimer();
                     }
                     showMouse(display);
                     break;
@@ -356,10 +357,13 @@ GameState maintainGameState(ALLEGRO_EVENT *event) {
         return STATE_GAME_PAUSE;
     } else if (event->type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN) {
         maintainGame(event);
+    } else if (event->type == ALLEGRO_EVENT_TIMER) {
+        incrementTimer();
     }
     displayMap(true);
     return STATE_GAME;
 }
+
 GameState maintainGamePauseMenuState(ALLEGRO_EVENT *event) {
     if (event->type == ALLEGRO_EVENT_KEY_DOWN) {
         switch (event->keyboard.keycode) {
