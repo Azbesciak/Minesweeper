@@ -17,23 +17,25 @@ void destroyAll();
 
 void hideMouse(ALLEGRO_DISPLAY *display);
 void showMouse(ALLEGRO_DISPLAY *display);
-GameState maintainMainMenuState(ALLEGRO_EVENT *event);
+State maintainMainMenuState(ALLEGRO_EVENT *event);
 
-GameState maintainMapEditorMenu(ALLEGRO_EVENT *event);
+State maintainMapEditorMenu(ALLEGRO_EVENT *event);
 
-GameState maintainMapEditor(ALLEGRO_EVENT *event);
+State maintainMapEditor(ALLEGRO_EVENT *event);
 
-GameState maintainEditorPauseMenu(ALLEGRO_EVENT *event);
+State maintainEditorPauseMenu(ALLEGRO_EVENT *event);
 
-GameState maintainSaveMapMenu(ALLEGRO_EVENT *event, ALLEGRO_DISPLAY *display);
+State maintainSaveMapMenu(ALLEGRO_EVENT *event, ALLEGRO_DISPLAY *display);
 
-GameState maintainSelectMapState(ALLEGRO_EVENT *event, ALLEGRO_DISPLAY *display);
+State maintainSelectMapState(ALLEGRO_EVENT *event, ALLEGRO_DISPLAY *display);
 
-GameState maintainSelectDifficultyState(ALLEGRO_EVENT *event);
+State maintainSelectDifficultyState(ALLEGRO_EVENT *event);
 
-GameState maintainGameState(ALLEGRO_EVENT *event);
+State maintainGameState(ALLEGRO_EVENT *event);
 
-GameState maintainGamePauseMenuState(ALLEGRO_EVENT *event);
+State maintainGamePauseMenuState(ALLEGRO_EVENT *event);
+
+State maintainGameFinishedState(ALLEGRO_EVENT *pEVENT);
 
 int main(int argc, char **argv) {
     ALLEGRO_DISPLAY *display = NULL;
@@ -69,11 +71,11 @@ int main(int argc, char **argv) {
     al_register_event_source(eventQueue, al_get_mouse_event_source());
     al_start_timer(timer);
     initializeAll();
-    GameState gameState = STATE_MAIN_MENU;
+    State gameState = STATE_MAIN_MENU;
 
     while (!gameOver) {
         ALLEGRO_EVENT event;
-        GameState temp = gameState;
+        State temp = gameState;
         al_wait_for_event(eventQueue, &event);
 
         if (event.type == ALLEGRO_EVENT_TIMER) {
@@ -111,6 +113,9 @@ int main(int argc, char **argv) {
                 break;
             case STATE_GAME_PAUSE:
                 gameState = maintainGamePauseMenuState(&event);
+                break;
+            case STATE_GAME_FINISHED:
+                gameState = maintainGameFinishedState(&event);
                 break;
             default: gameOver = true;
         }
@@ -157,6 +162,9 @@ int main(int argc, char **argv) {
                     hideMouse(display);
                     createGamePauseMenu();
                     break;
+                case STATE_GAME_FINISHED:
+                    hideMouse(display);
+                    break;
                 default: gameOver = true;
             }
         }
@@ -182,7 +190,7 @@ void destroyAll() {
     destroyMenuFont();
 }
 
-GameState maintainMainMenuState(ALLEGRO_EVENT *event) {
+State maintainMainMenuState(ALLEGRO_EVENT *event) {
     if (event->type == ALLEGRO_EVENT_KEY_DOWN) {
         switch (event->keyboard.keycode) {
             case ALLEGRO_KEY_DOWN : setLowerOption(MAIN_MENU_OPTIONS); break;
@@ -206,7 +214,7 @@ GameState maintainMainMenuState(ALLEGRO_EVENT *event) {
     return STATE_MAIN_MENU;
 }
 
-GameState maintainMapEditorMenu(ALLEGRO_EVENT *event) {
+State maintainMapEditorMenu(ALLEGRO_EVENT *event) {
     if (event->type == ALLEGRO_EVENT_KEY_DOWN) {
         switch (event->keyboard.keycode) {
             case ALLEGRO_KEY_DOWN : setLowerOption(EDITOR_MENU_OPTIONS); break;
@@ -232,7 +240,7 @@ GameState maintainMapEditorMenu(ALLEGRO_EVENT *event) {
     return STATE_EDITOR_MENU;
 }
 
-GameState maintainMapEditor(ALLEGRO_EVENT *event) {
+State maintainMapEditor(ALLEGRO_EVENT *event) {
         if (event->keyboard.keycode == ALLEGRO_KEY_ESCAPE && event->type == ALLEGRO_EVENT_KEY_DOWN) {
             return STATE_EDITOR_PAUSE;
         } else if (event->type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN) {
@@ -242,7 +250,7 @@ GameState maintainMapEditor(ALLEGRO_EVENT *event) {
     return STATE_EDITOR;
 }
 
-GameState maintainEditorPauseMenu(ALLEGRO_EVENT *event) {
+State maintainEditorPauseMenu(ALLEGRO_EVENT *event) {
    if (event->type == ALLEGRO_EVENT_KEY_DOWN) {
         switch (event->keyboard.keycode) {
             case ALLEGRO_KEY_DOWN : setLowerOption(EDITOR_MENU_OPTIONS); break;
@@ -264,7 +272,7 @@ GameState maintainEditorPauseMenu(ALLEGRO_EVENT *event) {
     return STATE_EDITOR_PAUSE;
 }
 
-GameState maintainSaveMapMenu(ALLEGRO_EVENT *event, ALLEGRO_DISPLAY *display) {
+State maintainSaveMapMenu(ALLEGRO_EVENT *event, ALLEGRO_DISPLAY *display) {
     if (event->type == ALLEGRO_EVENT_KEY_DOWN) {
         switch (event->keyboard.keycode) {
             case ALLEGRO_KEY_DOWN : setLowerOption(SAVE_MAP_OPTIONS); break;
@@ -295,7 +303,7 @@ GameState maintainSaveMapMenu(ALLEGRO_EVENT *event, ALLEGRO_DISPLAY *display) {
     return STATE_SAVE_MAP;
 }
 
-GameState maintainSelectMapState(ALLEGRO_EVENT *event, ALLEGRO_DISPLAY *display) {
+State maintainSelectMapState(ALLEGRO_EVENT *event, ALLEGRO_DISPLAY *display) {
     if (event->type == ALLEGRO_EVENT_KEY_DOWN) {
         switch (event->keyboard.keycode) {
             case ALLEGRO_KEY_DOWN : setLowerOption(SELECT_MAP_OPTIONS); break;
@@ -329,7 +337,7 @@ GameState maintainSelectMapState(ALLEGRO_EVENT *event, ALLEGRO_DISPLAY *display)
     return STATE_SELECT_MAP;
 }
 
-GameState maintainSelectDifficultyState(ALLEGRO_EVENT *event) {
+State maintainSelectDifficultyState(ALLEGRO_EVENT *event) {
     if (event->type == ALLEGRO_EVENT_KEY_DOWN) {
         switch (event->keyboard.keycode) {
             case ALLEGRO_KEY_DOWN : setLowerOption(LEVEL_DIFFICULTY_OPTIONS); break;
@@ -352,19 +360,24 @@ GameState maintainSelectDifficultyState(ALLEGRO_EVENT *event) {
     return STATE_SELECT_DIFFICULTY;
 }
 
-GameState maintainGameState(ALLEGRO_EVENT *event) {
+State maintainGameState(ALLEGRO_EVENT *event) {
+    bool gameInProgress = true;
     if (event->keyboard.keycode == ALLEGRO_KEY_ESCAPE && event->type == ALLEGRO_EVENT_KEY_DOWN) {
         return STATE_GAME_PAUSE;
     } else if (event->type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN) {
-        maintainGame(event);
+        gameInProgress = maintainGame(event);
     } else if (event->type == ALLEGRO_EVENT_TIMER) {
         incrementTimer();
     }
     displayMap(true);
-    return STATE_GAME;
+    if (gameInProgress) {
+        return STATE_GAME;
+    } else {
+        return STATE_GAME_FINISHED;
+    }
 }
 
-GameState maintainGamePauseMenuState(ALLEGRO_EVENT *event) {
+State maintainGamePauseMenuState(ALLEGRO_EVENT *event) {
     if (event->type == ALLEGRO_EVENT_KEY_DOWN) {
         switch (event->keyboard.keycode) {
             case ALLEGRO_KEY_DOWN : setLowerOption(GAME_PAUSE_OPTIONS); break;
@@ -383,6 +396,31 @@ GameState maintainGamePauseMenuState(ALLEGRO_EVENT *event) {
     }
     displayMenu();
     return STATE_GAME_PAUSE;
+}
+
+State maintainGameFinishedState(ALLEGRO_EVENT *event) {
+    if (event->type == ALLEGRO_EVENT_KEY_DOWN) {
+        switch (event->keyboard.keycode) {
+//            case ALLEGRO_KEY_LEFT : setLowerOption(GAME_PAUSE_OPTIONS); break;
+//            case ALLEGRO_KEY_RIGHT: setHigherOption(GAME_PAUSE_OPTIONS); break;
+            case ALLEGRO_KEY_ESCAPE:
+            case ALLEGRO_KEY_ENTER: return STATE_MAIN_MENU;
+
+//            {
+//                int option = getSelectedOption();
+//                switch (option) {
+//                    case GAME_PAUSE_CONTINUE: return STATE_GAME;
+//                    case GAME_PAUSE_QUIT:
+//                    default : return STATE_MAIN_MENU;
+//                }
+//            }
+            default : break;
+        }
+    }
+    displayMap(true);
+    displayGameResult();
+//    displayMenu();
+    return STATE_GAME_FINISHED;
 }
 
 void hideMouse(ALLEGRO_DISPLAY *display) {

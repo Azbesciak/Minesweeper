@@ -11,6 +11,7 @@ enum LevelDifficultyOption{DIF_EASY, DIF_NORMAL, DIF_HARD, DIF_CUSTOM, DIF_QUIT}
 enum SelectMapOption{SELECT_10X10, SELECT_25X25, SELECT_50X50, SELECT_CUSTOM, SELECT_BACK};
 enum GamePauseOption{GAME_PAUSE_CONTINUE, GAME_PAUSE_QUIT};
 enum SaveMapOptions{SAVE_BOMBS_LIMIT, SAVE_SAVE, SAVE_QUIT};
+enum GameFinishedOption{GAME_FINISHED_SAVE, GAME_FINISHED_QUIT};
 enum HorizontalOption{LESS, MORE};
 const int MAIN_MENU_OPTIONS = 3;
 const int EDITOR_MENU_OPTIONS = 4;
@@ -18,6 +19,7 @@ const int LEVEL_DIFFICULTY_OPTIONS = 5;
 const int SAVE_MAP_OPTIONS = 3;
 const int SELECT_MAP_OPTIONS = 5;
 const int GAME_PAUSE_OPTIONS = 2;
+const int GAME_FINISHED_OPTIONS = 2;
 const int MENU_ITEM_HEIGHT = 50;
 struct MenuOption {
     string title;
@@ -43,10 +45,11 @@ void createMainMenu();
 void createMapEditorMenu();
 void createMapEditorPauseMenu();
 void createSelectMapMenu();
-string getSelectedOptionName();
 void createLevelDifficultyMenu();
 void createSaveMapMenu();
 void createGamePauseMenu();
+void createGameFinishedMenu();
+string getSelectedOptionName();
 int getBombsLimitFromMenu(bool isSaveState);
 void createMenu(int options);
 void destroyMenu();

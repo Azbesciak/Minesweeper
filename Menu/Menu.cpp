@@ -86,6 +86,15 @@ void createGamePauseMenu() {
     setOption(GAME_PAUSE_QUIT, "Main menu");
     selectVerticalOption(GAME_PAUSE_CONTINUE);
 }
+
+void createGameFinishedMenu() {
+    destroyMenu();
+    createMenu(GAME_FINISHED_OPTIONS);
+    setOption(GAME_FINISHED_SAVE, "Save result");
+    setOption(GAME_FINISHED_QUIT, "Main menu");
+    selectVerticalOption(GAME_FINISHED_SAVE);
+}
+
 void createMenu(int options) {
     menu = new Menu();
     menu->option = new MenuOption[options];

@@ -12,11 +12,12 @@ void initializeColors() {
         setColor(COLOR_NORMAL, al_map_rgb(139, 195, 74));
         setColor(COLOR_HIGHLIGHT, al_map_rgb(205, 220, 57));
         setColor(COLOR_HIGHLIGHT_PLUS, al_map_rgb(245, 124, 0));
-        setColor(COLOR_FLAG, al_map_rgb(139, 195, 74));
+        setColor(COLOR_FLAG, al_map_rgb(33, 150, 243));
         setColor(COLOR_BOMB, al_map_rgb(245, 124, 0));
         setColor(COLOR_FREE_SPACE, al_map_rgb(56, 142, 60));
         setColor(COLOR_VISITED, al_map_rgb(139, 195, 74));
         setColor(COLOR_UNKNOWN, al_map_rgb(142, 36, 170));
+        setColor(COLOR_LOSE_SOURCE, al_map_rgb(0, 0, 0));
     }
 }
 void setColor(ColorId id, ALLEGRO_COLOR color) {

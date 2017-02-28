@@ -17,28 +17,38 @@ int fieldSize;
 int fieldWithSpanSize;
 int startX;
 int startY;
+int emptySpace;
+GameState gameState;
+Point *lastClick;
 int usedFlags = 0;
 int score = 0;
 int timer = 0;
-bool isGame = false;
+
 ALLEGRO_FONT *fieldsFont = nullptr;
 ALLEGRO_FONT *statsFont = nullptr;
+ALLEGRO_FONT *endGameFont = nullptr;
 
 // private
-int getCord(fstream *file) ;
-void drawField(int startX, int startY, int x, int y, Field *field, int fieldWithSpanSize, bool showFlags);
+int getCord(fstream *file);
+void drawField(int x, int y, Field *field, int fieldWithSpanSize, bool showBombsInfo);
 void drawPlayer(Player *player, int startX, int startY, int fieldWithSpanSize);
 ALLEGRO_COLOR getFieldColor(Field *field);
 
 void initializeMapProperties();
 void destroyMapProperties();
-
-void drawStats(bool isGame) ;
-void updateGame(int x, int y);
-
-void initializeBombsIfNeed(int clickX, int clickY) ;
-
+void drawStats(bool isGame);
+void updateGame(int x, int y, ALLEGRO_EVENT * event);
+void initializeBombsIfNeed(int clickX, int clickY);
 void changeNearbyFields(int currentX, int currentY, int value, void(*f)(int, int, int)) ;
+void initializeLastClick();
+void destroyLastClick();
+void setLastClickedField(int x, int y);
+bool compareLastClickCords(int x, int y);
+void setNextEditorState(int x, int y, ALLEGRO_EVENT *event);
+
+void drawFieldWithColor(int x, int y, ALLEGRO_COLOR color) ;
+
+void drawGameEnd() ;
 
 // implementation
 bool persistMap(ALLEGRO_DISPLAY *display) {
@@ -144,9 +154,12 @@ void initializeMapProperties() {
     fieldWithSpanSize = (int)(fieldSize / (1 - FIELD_SPAN_RATIO));
     startX = (int)((SCREEN_WIDTH - (fieldWithSpanSize * map ->sizeX)) / 2.0);
     startY = (int)((SCREEN_HEIGHT - (fieldWithSpanSize* map ->sizeY)) / 2.0);
-//    const char *fontPath = (FONT_PATH + MAIN_FONT).c_str();
     fieldsFont = al_load_font((FONT_PATH + MAIN_FONT).c_str(), (int)(fieldSize * 0.8), 0);
+    emptySpace = max((int)(fieldWithSpanSize * (FIELD_SPAN_RATIO) / 2.0), 1);
     statsFont = al_load_font(((FONT_PATH + MAIN_FONT).c_str()), 36, 0);
+    endGameFont = al_load_font(((FONT_PATH + MAIN_FONT).c_str()), (int)(SCREEN_HEIGHT * 0.2), 0);
+    gameState = GAME_STATE_PLAYING;
+    initializeLastClick();
 }
 
 void destroyMapProperties() {
@@ -156,6 +169,11 @@ void destroyMapProperties() {
     if (statsFont != nullptr) {
         al_destroy_font(statsFont);
     }
+    if (endGameFont != nullptr) {
+        al_destroy_font(endGameFont);
+    }
+
+    destroyLastClick();
 }
 
 void initializeEmptyMap(int sizeX, int sizeY) {
@@ -188,52 +206,69 @@ void destroyMap() {
     destroyMapProperties();
 }
 
+void displayGameResult() {
+    al_draw_filled_rectangle(0, (int)(SCREEN_HEIGHT * 0.3), SCREEN_WIDTH, (int)(SCREEN_HEIGHT * 0.7), al_map_rgba(0, 0, 0, 100));
+    string message;
+    if (gameState == GAME_STATE_WON) {
+        message = "You won";
+    } else {
+        message = "Game over";
+    }
+    al_draw_text(endGameFont, al_map_rgb(255, 255, 255), (int)(SCREEN_WIDTH / 2.0), (int)(SCREEN_HEIGHT * 0.3), ALLEGRO_ALIGN_CENTER, message.c_str());
+    al_draw_textf(statsFont, al_map_rgb(255, 255, 255), (int)(SCREEN_WIDTH / 2.0), (int)(SCREEN_HEIGHT * 0.55), ALLEGRO_ALIGN_CENTER, "score : %i", score);
+    al_draw_text(statsFont, al_map_rgb(120, 144, 156), (int)(SCREEN_WIDTH / 2.0), (int)(SCREEN_HEIGHT * 0.64), ALLEGRO_ALIGN_CENTER, "press enter to continue");
+}
+
 void displayMap(bool isGame) {
     for (int x = 0; x < map ->sizeX; x++) {
         for (int y = 0; y < map->sizeY; y++) {
             Field &field = map->fields[x][y];
-            drawField(startX, startY, x, y, &field, fieldWithSpanSize, isGame);
+            drawField(x, y, &field, fieldWithSpanSize, isGame);
         }
     }
-    drawStats(isGame);
+    if (gameState == GAME_STATE_PLAYING) {
+        drawStats(isGame);
+    } else {
+        drawGameEnd();
+    }
 }
 
-
-
-
-void drawField(int startX, int startY, int x, int y, Field *field, int fieldWithSpanSize, bool showFlags) {
-    int emptyPlace = max((int)(fieldWithSpanSize * (FIELD_SPAN_RATIO) / 2.0), 1);
+void drawField(int x, int y, Field *field, int fieldWithSpanSize, bool showBombsInfo) {
     ALLEGRO_COLOR color = getFieldColor(field);
-    const int leftUpperAngleX = startX + fieldWithSpanSize * x +emptyPlace;
-    const int leftUpperAngleY = startY + fieldWithSpanSize * y + emptyPlace;
-    const int rightBottomAngleX = startX + fieldWithSpanSize * (x + 1) - emptyPlace;
-    const int rightBottomAngleY = startY + fieldWithSpanSize * (y + 1) - emptyPlace;
-    al_draw_filled_rectangle(
-            leftUpperAngleX, leftUpperAngleY,
-            rightBottomAngleX, rightBottomAngleY,
-            color);
+    const int leftUpperCornerX = startX + fieldWithSpanSize * x + emptySpace;
+    const int leftUpperCornerY = startY + fieldWithSpanSize * y + emptySpace;
+    drawFieldWithColor(x, y, color);
     
-    if (showFlags && field->wasVisited && field->bombsInArea > 0 && field->type == FIELD_NORMAL) {
+    if (showBombsInfo && field->wasVisited && field->bombsInArea > 0 && field->type == FIELD_NORMAL) {
         al_draw_textf(fieldsFont, getColor(COLOR_HIGHLIGHT),
-                      leftUpperAngleX + fieldSize / 2, leftUpperAngleY,
+                      leftUpperCornerX + fieldSize / 2, leftUpperCornerY,
                       ALLEGRO_ALIGN_CENTER, "%i", field->bombsInArea);
     }
 }
 
-//void drawPlayer(Player *player, int startX, int startY, int fieldWithSpanSize) {
-//    int emptyPlace = (int)(fieldWithSpanSize * (FIELD_SPAN_RATIO) /2.0);
-//    ALLEGRO_COLOR color = al_map_rgb(57, 73, 171);
-//    al_draw_filled_rectangle(
-//            startX + fieldWithSpanSize * player->x + emptyPlace, startY + fieldWithSpanSize * player->y + emptyPlace,
-//            startX + fieldWithSpanSize * (player->x + 1) - emptyPlace, startY + fieldWithSpanSize * (player->y + 1) - emptyPlace,
-//            color);
-//    color = al_map_rgb(142, 36, 170);
-//    al_draw_filled_rectangle(
-//            startX + fieldWithSpanSize * player->x + emptyPlace * 2, startY + fieldWithSpanSize * player->y + emptyPlace * 2,
-//            startX + fieldWithSpanSize * (player->x + 1) - emptyPlace * 2, startY + fieldWithSpanSize * (player->y + 1) - emptyPlace * 2,
-//            color);
-//
-//}
+void drawFieldWithColor(int x, int y, ALLEGRO_COLOR color) {
+    const int leftUpperCornerX = startX + fieldWithSpanSize * x + emptySpace;
+    const int leftUpperCornerY = startY + fieldWithSpanSize * y + emptySpace;
+    const int rightBottomCornerX = startX + fieldWithSpanSize * (x + 1) - emptySpace;
+    const int rightBottomCornerY = startY + fieldWithSpanSize * (y + 1) - emptySpace;
+    al_draw_filled_rectangle(
+            leftUpperCornerX, leftUpperCornerY,
+            rightBottomCornerX, rightBottomCornerY,
+            color);
+}
+
+void drawSmallFieldWithColor(int x, int y, ALLEGRO_COLOR color) {
+    const int emptySpaceIncreased = emptySpace * 10;
+    const int leftUpperCornerX = startX + fieldWithSpanSize * x + emptySpaceIncreased;
+    const int leftUpperCornerY = startY + fieldWithSpanSize * y + emptySpaceIncreased;
+    const int rightBottomCornerX = startX + fieldWithSpanSize * (x + 1) - emptySpaceIncreased;
+    const int rightBottomCornerY = startY + fieldWithSpanSize * (y + 1) - emptySpaceIncreased;
+    al_draw_filled_rectangle(
+            leftUpperCornerX, leftUpperCornerY,
+            rightBottomCornerX, rightBottomCornerY,
+            color);
+}
+
 
 ALLEGRO_COLOR getFieldColor(Field *field) {
     if (field->type == FIELD_EMPTY_SPACE) {
@@ -253,38 +288,26 @@ ALLEGRO_COLOR getFieldColor(Field *field) {
     }
 }
 
-bool isGameFinished() {
-    int foundBombs = 0;
-    int checkedFields = 0;
-    for (int x = 0; x < map ->sizeX; x++) {
-        for (int y = 0; y < map->sizeX; y++) {
-            Field &field = map->fields[x][y];
-            if (field.wasVisited && field.type == FIELD_BOMB)
-                return true;
-            if (!field.wasVisited && field.isFlagged) {
-                foundBombs++;
-                checkedFields++;
-            } else if (field.wasVisited) {
-                checkedFields++;
-            }
-        }
-    }
-    return checkedFields >= map->sizeX * map->sizeY - map->emptyFields;
-}
-
-
 int getFieldSize() {
     int maxFieldAmount = max(map->sizeX, map->sizeY);
     double availablePlaceRatio = 1 - MARGIN_RATIO * 2;
     int maxSize = min((int)(SCREEN_HEIGHT * availablePlaceRatio), (int)(SCREEN_WIDTH * availablePlaceRatio));
     return (int)(maxSize / (double) maxFieldAmount * (1 - FIELD_SPAN_RATIO));
 }
-//std::vector<Map> getAllMaps() {
-//
-//}
 
-
-
+void drawGameEnd() {
+    for (int x = 0; x < map->sizeX; x++) {
+        for (int y = 0; y < map->sizeY; y++) {
+            Field &field = map->fields[x][y];
+            if (field.type == FIELD_BOMB) {
+                if (compareLastClickCords(x, y)) {
+                    drawFieldWithColor(x, y, getColor(COLOR_LOSE_SOURCE));
+                }
+                    drawSmallFieldWithColor(x, y, getColor(COLOR_BOMB));
+            }
+        }
+    }
+}
 
 void checkIfWasBombBefore(int x, int y) {
     if (map->fields[x][y].type == FIELD_BOMB) {
@@ -326,14 +349,15 @@ void setFieldAsFlagged(int x, int y) {
     map->fields[x][y].isFlagged = true;
     usedFlags++;
 }
-//void setFieldAsVirgin(int x, int y);
-//
+
 void increaseNearbyFieldsFlags(int currentX, int currentY) {
     changeNearbyFieldsFlags(currentX, currentY, 1);
 }
+
 void decreaseNearbyFieldsFlags(int currentX, int currentY) {
     changeNearbyFieldsFlags(currentX, currentY, -1);
 }
+
 void changeNearbyFieldsFlags(int currentX, int currentY, int value) {
     changeNearbyFields(currentX, currentY, value, changeFieldValue);
 }
@@ -365,6 +389,7 @@ void changeNearbyFields(int currentX, int currentY, int value, void(*f)(int, int
         f(currentX, currentY + 1, value);
     }
 }
+
 void changeFieldValue(int x, int y, int value) {
     Field &field = map->fields[x][y];
     field.bombsInArea += value;
@@ -372,16 +397,24 @@ void changeFieldValue(int x, int y, int value) {
 
 void showField(int x, int y, int value) {
     Field &field = map->fields[x][y];
-    if (field.type == FIELD_NORMAL && !field.wasVisited) {
-        field.wasVisited = true;
-        score++;
-        if (field.bombsInArea == 0) {
-            changeNearbyFields(x, y, value, showField);
+    if (!field.wasVisited) {
+        if (field.type == FIELD_NORMAL || value == 1) {
+            field.wasVisited = true;
         }
+        if (value == 1) {
+            value = 0;
+        }
+        if (field.type == FIELD_NORMAL) {
+            score++;
+            if (field.bombsInArea == 0) {
+                changeNearbyFields(x, y, value, showField);
+            }
+        }
+
     }
 }
 
-void showAllBombs(int clickX, int clickY) {
+void showAllBombs() {
     for (int x = 0; x < map->sizeX; x++) {
         for (int y = 0; y < map->sizeY; y++) {
             if (map->fields[x][y].type == FIELD_BOMB) {
@@ -391,29 +424,99 @@ void showAllBombs(int clickX, int clickY) {
     }
 }
 
-void maintainGame(ALLEGRO_EVENT *event){
-    readUserOnMapClick(event, updateGame);
+bool maintainGame(ALLEGRO_EVENT *event){
+    if (gameState == GAME_STATE_PLAYING) {
+        readUserOnMapClick(event, updateGame);
+    }
+    return gameState == GAME_STATE_PLAYING;
 }
 
 void maintainEditor(ALLEGRO_EVENT *event) {
     readUserOnMapClick(event, setNextEditorState);
 }
 
-void updateGame(int x, int y) {
-    if (score == 0) {
-        initializeBombsIfNeed(x, y);
-    }
-    Field &field = map->fields[x][y];
-    if (!field.wasVisited) {
-        if (field.type == FIELD_NORMAL) {
-            showField(x, y, 0);
-        } else if (field.type == FIELD_BOMB) {
-            showAllBombs(x, y);
-//            return false;
+void updateGame(int x, int y, ALLEGRO_EVENT *event) {
+    if (gameState == GAME_STATE_PLAYING) {
+        Field &field = map->fields[x][y];
+        if (event->mouse.button & 2) {
+            if (field.isFlagged) {
+                usedFlags--;
+                field.isFlagged = false;
+            } else if (!field.isFlagged && map->bombsLimit > usedFlags) {
+                field.isFlagged = true;
+                usedFlags++;
+            }
+        } else if (event->mouse.button & 1) {
+            if (score == 0) {
+                initializeBombsIfNeed(x, y);
+            }
+            if (!field.wasVisited) {
+                if (field.isFlagged && field.type == FIELD_NORMAL) {
+                    usedFlags--;
+                }
+//                if (field.type == FIELD_NORMAL) {
+                    showField(x, y, 1);
+//                }
+//                else if (field.type == FIELD_BOMB) {
+//                    showAllBombs();
+//                }
+            }
         }
+
+        setLastClickedField(x, y);
+        isGameFinished();
     }
 }
 
+
+void isGameFinished() {
+    int foundBombs = 0;
+    int checkedFields = 0;
+    for (int x = 0; x < map ->sizeX; x++) {
+        for (int y = 0; y < map->sizeX; y++) {
+            Field &field = map->fields[x][y];
+            if (field.wasVisited && field.type == FIELD_BOMB) {
+                gameState = GAME_STATE_LOST;
+                cout<<"lost"<<endl;
+                return;
+            }
+            if (!field.wasVisited && field.isFlagged) {
+                foundBombs++;
+                checkedFields++;
+            } else if (field.wasVisited) {
+                checkedFields++;
+            }
+        }
+    }
+
+    if (checkedFields >= map->sizeX * map->sizeY - map->emptyFields) {
+        gameState = GAME_STATE_WON;
+        setLastClickedField(-1, -1);
+        cout<<"won"<<endl;
+    } else {
+        gameState = GAME_STATE_PLAYING;
+    }
+}
+
+void initializeLastClick() {
+    lastClick = new Point();
+    lastClick->x = -1;
+    lastClick->y = -1;
+}
+void destroyLastClick() {
+    if (lastClick != nullptr) {
+        delete lastClick;
+    }
+}
+
+void setLastClickedField(int x, int y) {
+    lastClick->x = x;
+    lastClick->y = y;
+}
+
+bool compareLastClickCords(int x, int y) {
+    return lastClick->x == x && lastClick->y == y;
+}
 
 void initializeBombsIfNeed(int clickX, int clickY) {
     int currentBombsLimit = 0;
@@ -451,8 +554,11 @@ void resetTimer() {
 }
 
 void incrementTimer() {
-    timer++;
+    if (gameState == GAME_STATE_PLAYING) {
+        timer++;
+    }
 }
+
 void drawStats(bool isGame) {
     const int textVerticalPosition = (int)(min(startY, startX) * 0.06);
     if (isGame) {
@@ -461,7 +567,7 @@ void drawStats(bool isGame) {
                       ALLEGRO_ALIGN_LEFT, "Score : %i", score);
         al_draw_textf(statsFont, getColor(COLOR_HIGHLIGHT), SCREEN_WIDTH / 2, textVerticalPosition,
                       ALLEGRO_ALIGN_CENTER, "%i : %i", timer / (int)(FPS * 60), int(timer / FPS) % 60);
-        al_draw_textf(statsFont, getColor(COLOR_NORMAL), SCREEN_WIDTH - 10, textVerticalPosition,
+        al_draw_textf(statsFont, getColor(COLOR_FLAG), SCREEN_WIDTH - 10, textVerticalPosition,
                       ALLEGRO_ALIGN_RIGHT, "Flags : %i", map->bombsLimit - usedFlags);
     } else {
         al_draw_textf(statsFont, getColor(COLOR_BOMB), SCREEN_WIDTH - 10, textVerticalPosition,
@@ -469,19 +575,30 @@ void drawStats(bool isGame) {
     }
 }
 
-void readUserOnMapClick(ALLEGRO_EVENT *event, void(*f)(int, int)) {
+void readUserOnMapClick(ALLEGRO_EVENT *event, void(*f)(int, int, ALLEGRO_EVENT *)) {
     int mouseX = event->mouse.x;
     int mouseY = event->mouse.y;
     if (mouseX < startX || mouseY < startY) return;
     int x = (int)((mouseX - startX) / (double)fieldWithSpanSize);
     int y = (int)((mouseY - startY) / (double)fieldWithSpanSize);
     if (x < map->sizeX && y < map->sizeY && x >= 0 && y >= 0) {
-        f(x, y);
+        f(x, y, event);
     }
 }
 
-void setNextEditorState(int x, int y) {
+void setNextEditorState(int x, int y, ALLEGRO_EVENT *event) {
     Field &field = map->fields[x][y];
+//    if (event->mouse.button == 1) {
+//        if (field.type == FIELD_EMPTY_SPACE) {
+//            map->emptyFields--;
+//        }
+//        if (field.type != FIELD_BOMB) {
+//            field.type = FIELD_BOMB;
+//            map->bombsLimit++;
+//        } else {
+//
+//        }
+//    }
     if (field.type == FIELD_NORMAL) {
         field.type = FIELD_BOMB;
         map->bombsLimit++;
