@@ -25,8 +25,12 @@ enum ColorId {
     COLOR_UNKNOWN,
     COLOR_VISITED,
     COLOR_LOSE_SOURCE,
+    COLOR_1_BOMB,
+    COLOR_2_BOMB,
+    COLOR_3_BOMB,
+    COLOR_MORE_BOMB,
 };
-const int COLORS_AMOUNT = 10;
+const int COLORS_AMOUNT = 14;
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 800;
 const int MAX_FIELDS = 100;

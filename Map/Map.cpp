@@ -30,9 +30,11 @@ ALLEGRO_FONT *endGameFont = nullptr;
 
 // private
 int getCord(fstream *file);
+int getCord(fstream *file, bool endLine);
 void drawField(int x, int y, Field *field, int fieldWithSpanSize, bool showBombsInfo);
 void drawPlayer(Player *player, int startX, int startY, int fieldWithSpanSize);
 ALLEGRO_COLOR getFieldColor(Field *field);
+ALLEGRO_COLOR getBombsInfoColor(int bombsInArea);
 
 void initializeMapProperties();
 void destroyMapProperties();
@@ -68,8 +70,7 @@ bool persistMap(ALLEGRO_DISPLAY *display) {
              << map->bombsLimit << " " << map->emptyFields << endl;
         for (int x = 0; x < map->sizeX; x++) {
             for (int y = 0; y < map->sizeY; y++) {
-                file << map->fields[x][y].type << " "
-                     << map->fields[x][y].bombsInArea << endl;
+                file << map->fields[x][y].type << " ";
             }
         }
         file.close();
@@ -113,7 +114,7 @@ bool loadMap(ALLEGRO_DISPLAY * display, string path) {
     map->sizeX = getCord(&file);
     map->sizeY = getCord(&file);
     map->bombsLimit = getCord(&file);
-    map->emptyFields = getCord(&file);
+    map->emptyFields = getCord(&file, true);
     if (map->sizeX <= 0 || map->sizeX > 100 ||
             map->sizeY <= 0 || map->sizeY > 100 ||
             map->bombsLimit > map->sizeX * map->sizeY ||
@@ -125,10 +126,11 @@ bool loadMap(ALLEGRO_DISPLAY * display, string path) {
     createFields();
     for (int x = 0; x < map->sizeX; x++) {
         for (int y = 0; y < map->sizeY; y++) {
-            map->fields[x][y].wasVisited = false;
-            map->fields[x][y].isFlagged = false;
-            map->fields[x][y].type = (FieldType)getCord(&file);
-            map->fields[x][y].bombsInArea = getCord(&file);
+            Field &field = map->fields[x][y];
+            field.wasVisited = false;
+            field.isFlagged = false;
+            field.type = (FieldType)getCord(&file);
+            field.bombsInArea = 0;
         }
     }
     usedFlags = 0;
@@ -136,8 +138,16 @@ bool loadMap(ALLEGRO_DISPLAY * display, string path) {
 }
 
 int getCord(fstream *file) {
+    return getCord(file, false);
+}
+
+int getCord(fstream *file, bool endLine) {
     string temp;
-    getline(*file, temp, ' ');
+    if (endLine) {
+        getline(*file, temp);
+    } else {
+        getline(*file, temp, ' ');
+    }
     return atoi(temp.c_str());
 }
 
@@ -240,9 +250,19 @@ void drawField(int x, int y, Field *field, int fieldWithSpanSize, bool showBombs
     drawFieldWithColor(x, y, color);
     
     if (showBombsInfo && field->wasVisited && field->bombsInArea > 0 && field->type == FIELD_NORMAL) {
-        al_draw_textf(fieldsFont, getColor(COLOR_HIGHLIGHT),
+        color = getBombsInfoColor(field->bombsInArea);
+
+        al_draw_textf(fieldsFont, color,
                       leftUpperCornerX + fieldSize / 2, leftUpperCornerY,
                       ALLEGRO_ALIGN_CENTER, "%i", field->bombsInArea);
+    }
+}
+ALLEGRO_COLOR getBombsInfoColor(int bombsInArea) {
+    switch (bombsInArea) {
+        case 1: return getColor(COLOR_1_BOMB);
+        case 2: return getColor(COLOR_2_BOMB);
+        case 3: return getColor(COLOR_3_BOMB);
+        default: return getColor(COLOR_MORE_BOMB);
     }
 }
 
@@ -397,7 +417,7 @@ void changeFieldValue(int x, int y, int value) {
 
 void showField(int x, int y, int value) {
     Field &field = map->fields[x][y];
-    if (!field.wasVisited) {
+    if (!field.wasVisited && !field.isFlagged) {
         if (field.type == FIELD_NORMAL || value == 1) {
             field.wasVisited = true;
         }
@@ -438,6 +458,8 @@ void maintainEditor(ALLEGRO_EVENT *event) {
 void updateGame(int x, int y, ALLEGRO_EVENT *event) {
     if (gameState == GAME_STATE_PLAYING) {
         Field &field = map->fields[x][y];
+        if (field.type == FIELD_EMPTY_SPACE) return;
+
         if (event->mouse.button & 2) {
             if (field.isFlagged) {
                 usedFlags--;
@@ -451,15 +473,11 @@ void updateGame(int x, int y, ALLEGRO_EVENT *event) {
                 initializeBombsIfNeed(x, y);
             }
             if (!field.wasVisited) {
-                if (field.isFlagged && field.type == FIELD_NORMAL) {
+                if (field.isFlagged) {
+                    field.isFlagged = false;
                     usedFlags--;
                 }
-//                if (field.type == FIELD_NORMAL) {
                     showField(x, y, 1);
-//                }
-//                else if (field.type == FIELD_BOMB) {
-//                    showAllBombs();
-//                }
             }
         }
 
