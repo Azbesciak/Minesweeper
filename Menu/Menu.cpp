@@ -17,6 +17,7 @@ void createMainMenu() {
     createMenu(MAIN_MENU_OPTIONS);
     setOption(MENU_START_GAME, "Play game");
     setOption(MENU_EDITOR, "Editor");
+    setOption(MENU_RANKING, "Ranking");
     setOption(MENU_QUIT, "Exit");
     selectVerticalOption(MENU_START_GAME);
 }
@@ -132,11 +133,24 @@ void setVariableOption(int optionId, string title, int value, int min, int max) 
     option.isChoice = true;
 }
 
+void displayGameFinishedMenu() {
+    ALLEGRO_COLOR HIGHLIGHT_COLOR = getMenuHighlightColor();
+    ALLEGRO_COLOR NORMAL_COLOR = getMenuNormalColor();
+    int lineX = SCREEN_WIDTH / 2;
+    int lineY = (int)(SCREEN_HEIGHT * 0.64);
+
+    ALLEGRO_COLOR colorSave = menu->selectedVertically == GAME_FINISHED_SAVE ? HIGHLIGHT_COLOR : NORMAL_COLOR;
+    ALLEGRO_COLOR colorQuit = menu->selectedVertically == GAME_FINISHED_QUIT ? HIGHLIGHT_COLOR : NORMAL_COLOR;
+
+    al_draw_text(menuFont, colorSave, lineX - 20, lineY, ALLEGRO_ALIGN_RIGHT, menu->option[GAME_FINISHED_SAVE].title.c_str());
+    al_draw_text(menuFont, colorQuit, lineX + 20, lineY, ALLEGRO_ALIGN_LEFT, menu->option[GAME_FINISHED_QUIT].title.c_str());
+}
+
 void displayMenu() {
     ALLEGRO_COLOR HIGHLIGHT_COLOR = getMenuHighlightColor();
     ALLEGRO_COLOR NORMAL_COLOR = getMenuNormalColor();
+    const int lineX = SCREEN_WIDTH / 2;
     for (int option = 0; option < menu->options; option++) {
-        int lineX = SCREEN_WIDTH / 2;
         int lineY = SCREEN_HEIGHT / 2 + option * MENU_ITEM_HEIGHT - (int)(menu->options / 2.0 * MENU_ITEM_HEIGHT);
         ALLEGRO_COLOR color = menu->selectedVertically == option ? HIGHLIGHT_COLOR : NORMAL_COLOR;
 

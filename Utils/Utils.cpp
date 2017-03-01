@@ -1,6 +1,10 @@
 
 #include <allegro5/color.h>
+#include <fstream>
+
 #include "Utils.h"
+
+using namespace std;
 
 ColorsPalette *palette = nullptr;
 
@@ -55,33 +59,27 @@ void destroyColors() {
     }
 }
 
-void initializePoint(Point *point, int x, int y) {
-    point = new Point();
-    point->x = x;
-    point->y = y;
+int getIntFromFile(fstream *file) {
+    return getIntFromFile(file, '\n');
 }
-void destroyPoint(Point *point) {
-    if (point != nullptr) {
-        delete point;
-    }
+
+int getIntFromFile(fstream *file, char separator) {
+
+    return atoi(getStringFromFile(file, separator).c_str());
 }
-int getX(Point *point) {
-    if (point != nullptr) {
-        return point->x;
-    } else {
-        return 0;
-    }
+
+string getStringFromFile(fstream *file, char separator) {
+    string temp;
+    getline(*file, temp, separator);
+    return temp;
 }
-void setX(Point *point, int x) {
-    if (point != nullptr) {
-        point->x = x;
-    }
+
+string getStringFromFile(fstream *file) {
+    return getStringFromFile(file, '\n');
 }
-int getY(Point *point) {
-    if (point != nullptr) {
-        return point->y;
-    } else {
-        return 0;
-    }
+
+string parseTime(int time) {
+    int min = time / 60;
+    int sec = time % 60;
+    return to_string(min) + " : " + to_string(sec);
 }
-void setY(Point *point, int y);

@@ -8,6 +8,7 @@
 #include "Utils/Utils.h"
 #include "Menu/Menu.h"
 #include "Map/Map.h"
+#include "Ranking/Ranking.h"
 
 
 bool gameOver = false;
@@ -36,6 +37,10 @@ State maintainGameState(ALLEGRO_EVENT *event);
 State maintainGamePauseMenuState(ALLEGRO_EVENT *event);
 
 State maintainGameFinishedState(ALLEGRO_EVENT *pEVENT);
+
+State maintainShowStatsState(ALLEGRO_EVENT *event);
+
+State maintainSaveResultState(ALLEGRO_EVENT *event);
 
 int main(int argc, char **argv) {
     ALLEGRO_DISPLAY *display = NULL;
@@ -117,6 +122,12 @@ int main(int argc, char **argv) {
             case STATE_GAME_FINISHED:
                 gameState = maintainGameFinishedState(&event);
                 break;
+            case STATE_SHOW_RANKING:
+                gameState = maintainShowStatsState(&event);
+                break;
+            case STATE_SAVE_STATS:
+                gameState = maintainSaveResultState(&event);
+                break;
             default: gameOver = true;
         }
 
@@ -129,6 +140,11 @@ int main(int argc, char **argv) {
         if (temp != gameState) {
             switch (gameState) {
                 case STATE_MAIN_MENU:
+                    if (temp == STATE_SHOW_RANKING) {
+                        destroyStats();
+                    } else if (temp == STATE_SAVE_STATS) {
+                        destroyLastPlayerStats();
+                    }
                     createMainMenu(); break;
                 case STATE_EDITOR_MENU:
                     if (temp == STATE_EDITOR) {
@@ -164,7 +180,15 @@ int main(int argc, char **argv) {
                     break;
                 case STATE_GAME_FINISHED:
                     hideMouse(display);
+                    createGameFinishedMenu();
                     break;
+                case STATE_SAVE_STATS:
+                    createLastPlayerStats();
+                    break;
+                case STATE_SHOW_RANKING:
+                    initStats();
+                    break;
+
                 default: gameOver = true;
             }
         }
@@ -202,6 +226,7 @@ State maintainMainMenuState(ALLEGRO_EVENT *event) {
                     case MENU_QUIT: gameOver = true; break;
                     case MENU_START_GAME: return STATE_SELECT_MAP;
                     case MENU_EDITOR: return STATE_EDITOR_MENU;
+                    case MENU_RANKING: return STATE_SHOW_RANKING;
                     default : break;
                 }
             }
@@ -401,28 +426,62 @@ State maintainGamePauseMenuState(ALLEGRO_EVENT *event) {
 State maintainGameFinishedState(ALLEGRO_EVENT *event) {
     if (event->type == ALLEGRO_EVENT_KEY_DOWN) {
         switch (event->keyboard.keycode) {
-//            case ALLEGRO_KEY_LEFT : setLowerOption(GAME_PAUSE_OPTIONS); break;
-//            case ALLEGRO_KEY_RIGHT: setHigherOption(GAME_PAUSE_OPTIONS); break;
+            case ALLEGRO_KEY_LEFT : setLowerOption(GAME_FINISHED_OPTIONS); break;
+            case ALLEGRO_KEY_RIGHT: setHigherOption(GAME_FINISHED_OPTIONS); break;
             case ALLEGRO_KEY_ESCAPE:
-            case ALLEGRO_KEY_ENTER: return STATE_MAIN_MENU;
-
-//            {
-//                int option = getSelectedOption();
-//                switch (option) {
-//                    case GAME_PAUSE_CONTINUE: return STATE_GAME;
-//                    case GAME_PAUSE_QUIT:
-//                    default : return STATE_MAIN_MENU;
-//                }
-//            }
+            case ALLEGRO_KEY_ENTER: {
+                int option = getSelectedOption();
+                switch (option) {
+                    case GAME_FINISHED_SAVE: return STATE_SAVE_STATS;
+                    case GAME_PAUSE_QUIT:
+                    default : return STATE_MAIN_MENU;
+                }
+            }
             default : break;
         }
     }
     displayMap(true);
     displayGameResult();
-//    displayMenu();
+    displayGameFinishedMenu();
     return STATE_GAME_FINISHED;
 }
 
+
+State maintainShowStatsState(ALLEGRO_EVENT *event) {
+    if (event->type == ALLEGRO_EVENT_KEY_DOWN) {
+        switch (event->keyboard.keycode) {
+            case ALLEGRO_KEY_DOWN : getHigherStat(); break;
+            case ALLEGRO_KEY_UP: getLowerStat() ; break;
+            case ALLEGRO_KEY_ESCAPE: return STATE_MAIN_MENU;
+            default : break;
+        }
+    }
+    showStats();
+    return STATE_SHOW_RANKING;
+}
+
+State maintainSaveResultState(ALLEGRO_EVENT *event) {
+    if (event->type == ALLEGRO_EVENT_KEY_DOWN) {
+        switch (event->keyboard.keycode) {
+            case ALLEGRO_KEY_ESCAPE: return STATE_MAIN_MENU;
+            case ALLEGRO_KEY_ENTER: {
+               bool result = saveStat();
+                if (result) {
+                    cout<<"saved"<<endl;
+                } else {
+                    cout << "not saved" <<endl;
+                }
+                return STATE_MAIN_MENU;
+            }
+            default : {
+                updateLastPlayerName(event);
+                break;
+            }
+        }
+    }
+    displayPlayerNameInput();
+    return STATE_SAVE_STATS;
+}
 void hideMouse(ALLEGRO_DISPLAY *display) {
     al_hide_mouse_cursor(display);
     mouseVisible = false;

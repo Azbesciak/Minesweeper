@@ -30,31 +30,34 @@ struct Map {
 };
 
 extern Map *map;
-extern int fieldSize;
-extern int fieldWithSpanSize;
-extern int startX;
-extern int startY;
-extern int usedFlags;
-extern int score;
-extern int timer;
+//extern int fieldSize;
+//extern int fieldWithSpanSize;
+//extern int startX;
+//extern int startY;
+//extern int usedFlags;
+//extern int score;
+//extern int timer;
 extern GameState gameState;
 extern Point *lastClick;
-extern ALLEGRO_FONT *fieldsFont;
-extern ALLEGRO_FONT *statsFont;
-extern ALLEGRO_FONT *endGameFont;
+//extern ALLEGRO_FONT *fieldsFont;
+//extern ALLEGRO_FONT *statsFont;
+//extern ALLEGRO_FONT *endGameFont;
 
 void prepareMapToPersist();
 bool persistMap(ALLEGRO_DISPLAY * display);
 bool selectMap(bool isCustom, ALLEGRO_DISPLAY *display);
 bool loadMap(ALLEGRO_DISPLAY * display, std::string path);
+string getMapProps();
 void createFields();
 void initializeEmptyMap(int sizeX, int sizeY);
 void destroyMap();
 void displayMap(bool isGame);
 void readUserOnMapClick(ALLEGRO_EVENT *event, void(*f)(int, int, ALLEGRO_EVENT *));
 void resetScore();
+int getGameScore();
 void resetTimer();
 void incrementTimer();
+int getGameTimeInSec();
 bool maintainGame(ALLEGRO_EVENT *event);
 void maintainEditor(ALLEGRO_EVENT *event);
 void isGameFinished();
@@ -65,11 +68,10 @@ void increaseNearbyFieldsFlags(int currentX, int currentY);
 void decreaseNearbyFieldsFlags(int currentX, int currentY);
 void changeNearbyFieldsFlags(int currentX, int currentY, int value);
 void changeFieldValue(int x, int y, int value);
-
+std::string getCurrentTime();
 void changeClickedFieldState(ALLEGRO_EVENT *event);
 
 int getFieldSize();
-std::vector<Map> getAllMaps();
 
 
 #endif //MINESWEEPER_MAP_H

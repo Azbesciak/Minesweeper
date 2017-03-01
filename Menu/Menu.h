@@ -4,7 +4,7 @@
 #include <iostream>
 #include <allegro5/allegro_font.h>
 using namespace std;
-enum MainMenuOption{MENU_START_GAME, MENU_EDITOR, MENU_QUIT};
+enum MainMenuOption{MENU_START_GAME, MENU_EDITOR, MENU_RANKING, MENU_QUIT};
 enum EditorMenuOption{EDITOR_MENU_CHOOSE_HEIGHT, EDITOR_MENU_CHOOSE_WIDTH, EDITOR_MENU_START, EDITOR_MENU_QUIT};
 enum EditorMenuPauseOption{EDITOR_PAUSE_SAVE, EDITOR_PAUSE_CONTINUE, EDITOR_PAUSE_RESET, EDITOR_PAUSE_QUIT};
 enum LevelDifficultyOption{DIF_EASY, DIF_NORMAL, DIF_HARD, DIF_CUSTOM, DIF_QUIT};
@@ -13,7 +13,7 @@ enum GamePauseOption{GAME_PAUSE_CONTINUE, GAME_PAUSE_QUIT};
 enum SaveMapOptions{SAVE_BOMBS_LIMIT, SAVE_SAVE, SAVE_QUIT};
 enum GameFinishedOption{GAME_FINISHED_SAVE, GAME_FINISHED_QUIT};
 enum HorizontalOption{LESS, MORE};
-const int MAIN_MENU_OPTIONS = 3;
+const int MAIN_MENU_OPTIONS = 4;
 const int EDITOR_MENU_OPTIONS = 4;
 const int LEVEL_DIFFICULTY_OPTIONS = 5;
 const int SAVE_MAP_OPTIONS = 3;
@@ -49,6 +49,7 @@ void createLevelDifficultyMenu();
 void createSaveMapMenu();
 void createGamePauseMenu();
 void createGameFinishedMenu();
+void displayGameFinishedMenu();
 string getSelectedOptionName();
 int getBombsLimitFromMenu(bool isSaveState);
 void createMenu(int options);

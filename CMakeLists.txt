@@ -3,7 +3,7 @@ project(Minesweeper)
 
 set(CMAKE_CXX_STANDARD 14)
 
-set(SOURCE_FILES main.cpp Player/Player.h Utils/Utils.h Player/Player.cpp Menu/Menu.h Menu/Menu.cpp Utils/Utils.cpp Editor/Editor.h Editor/Editor.cpp Map/Map.h Map/Map.cpp)
+set(SOURCE_FILES main.cpp Utils/Utils.h Menu/Menu.h Menu/Menu.cpp Utils/Utils.cpp Editor/Editor.h Editor/Editor.cpp Map/Map.h Map/Map.cpp Ranking/Ranking.h Ranking/Ranking.cpp)
 add_executable(Minesweeper ${SOURCE_FILES})
 
 #INCLUDE_DIRECTORIES(allegro/5.0.11/include)
