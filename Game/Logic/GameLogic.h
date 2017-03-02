@@ -9,6 +9,7 @@
 #include <string>
 
 using namespace std;
+extern GameState gameState;
 
 void readUserOnMapClick(ALLEGRO_EVENT *event, bool ignoreOutsideMap, void(*f)(int, int, ALLEGRO_EVENT *));
 
@@ -40,8 +41,6 @@ void displayGameResult();
 
 void increaseNearbyFieldsFlags(int currentX, int currentY);
 
-void decreaseNearbyFieldsFlags(int currentX, int currentY);
-
 void changeNearbyFieldsFlags(int currentX, int currentY, int value);
 
 void changeFieldValue(int x, int y, int value);
@@ -51,7 +50,5 @@ std::string getCurrentTime();
 void initializeGameLogicProps();
 
 void destroyGameLogicProps();
-
-void changeClickedFieldState(ALLEGRO_EVENT *event);
 
 #endif //MINESWEEPER_GAMELOGIC_H

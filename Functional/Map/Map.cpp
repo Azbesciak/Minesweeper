@@ -12,16 +12,16 @@
 
 using namespace std;
 
+// public
 Map *map;
 int fieldSize;
 int fieldWithSpanSize;
 int startX;
 int startY;
-int emptySpace;
-
-ALLEGRO_FONT *fieldsFont = nullptr;
 
 // private
+int emptySpace;
+ALLEGRO_FONT *fieldsFont = nullptr;
 
 ALLEGRO_COLOR getFieldColor(Field *field);
 

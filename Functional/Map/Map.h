@@ -37,8 +37,6 @@ extern int fieldSize;
 extern int fieldWithSpanSize;
 extern int startX;
 extern int startY;
-extern GameState gameState;
-extern Point *lastClick;
 
 void prepareMapToPersist();
 

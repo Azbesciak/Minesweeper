@@ -8,22 +8,23 @@
 #include "../../Game/Logic/GameLogic.h"
 
 using namespace std;
-
-Stats *ranking = nullptr;
+// public
 Stats *gameResult = nullptr;
+//ALLEGRO_FONT *rankingFont;
+
+// private
+Stats *ranking = nullptr;
 int rankingCursor;
 int records;
 int rowHeight;
-//ALLEGRO_FONT *rankingFont;
 
-//private
 void sortStats(Stats *stats, int amount);
 
 bool initStats(bool isAddMode);
 
 void printStat(int index, int yPosition);
 
-//implementation
+// implementation
 bool saveStat() {
     initStats(true);
     if (gameResult->playerName.compare("") == 0) {

@@ -10,8 +10,8 @@ struct Stats {
     int time;
     std::string mapProps;
 };
+
 extern Stats *gameResult;
-//extern ALLEGRO_FONT *statsFont;
 const int MAX_STATS_ON_SCREEN = 10;
 const std::string STATS_PATH = "../stats.txt";
 

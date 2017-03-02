@@ -3,9 +3,11 @@
 #include "../Map/Map.h"
 #include <allegro5/allegro_primitives.h>
 
+// public
 Menu *menu = nullptr;
 ALLEGRO_FONT *menuFont = nullptr;
 
+// implementation
 void initializeMenuFont() {
     menuFont = al_load_font((FONT_PATH + MAIN_FONT).c_str(), 36, 0);
 }

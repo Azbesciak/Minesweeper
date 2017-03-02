@@ -5,9 +5,10 @@
 #include "Utils.h"
 
 using namespace std;
-
+// private
 ColorsPalette *palette = nullptr;
 
+// implementation
 void initializeColors() {
     if (palette == nullptr) {
         palette = new ColorsPalette();
@@ -72,10 +73,6 @@ string getStringFromFile(fstream *file, char separator) {
     string temp;
     getline(*file, temp, separator);
     return temp;
-}
-
-string getStringFromFile(fstream *file) {
-    return getStringFromFile(file, '\n');
 }
 
 string parseTime(int time) {

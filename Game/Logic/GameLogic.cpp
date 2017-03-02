@@ -12,18 +12,21 @@
 
 using namespace std;
 
-ALLEGRO_FONT *endGameFont;
-ALLEGRO_FONT *statsFont = nullptr;
 
-ALLEGRO_COLOR getColor(int counter, bool isWin);
-
+// public
 GameState gameState;
-Point *lastClick;
 int usedFlags;
 int score;
 int timer;
 
+// private
+Point *lastClick;
+ALLEGRO_FONT *endGameFont;
+ALLEGRO_FONT *statsFont = nullptr;
+
 void setLastClickedField(int x, int y);
+
+ALLEGRO_COLOR getColor(int counter, bool isWin);
 
 void initializeBombsIfNeed(int clickX, int clickY);
 
@@ -33,12 +36,13 @@ void updateGame(int x, int y, ALLEGRO_EVENT *event);
 
 void setNextEditorState(int x, int y, ALLEGRO_EVENT *);
 
-void changeNearbyFields(int currentX, int currentY, int value, void(*f)(int, int, int));
+void changeNearbyFields(int currentX, int currentY, int value, void (*f)(int, int, int));
 
 void initializeLastClick();
 
 void destroyLastClick();
 
+// implementation
 void initializeGameLogicProps() {
     destroyGameLogicProps();
     statsFont = al_load_font(((FONT_PATH + MAIN_FONT).c_str()), 36, 0);
@@ -116,10 +120,6 @@ void setFieldAsBomb(int x, int y) {
 
 void increaseNearbyFieldsFlags(int currentX, int currentY) {
     changeNearbyFieldsFlags(currentX, currentY, 1);
-}
-
-void decreaseNearbyFieldsFlags(int currentX, int currentY) {
-    changeNearbyFieldsFlags(currentX, currentY, -1);
 }
 
 void changeNearbyFieldsFlags(int currentX, int currentY, int value) {

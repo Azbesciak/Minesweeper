@@ -41,7 +41,6 @@ struct Point {
 struct ColorsPalette {
     ALLEGRO_COLOR *color;
 };
-//extern ColorsPalette *palette;
 
 void initializeColors();
 void destroyColors();
@@ -50,7 +49,6 @@ ALLEGRO_COLOR getColor(ColorId id);
 int getIntFromFile(fstream *file, char separator);
 int getIntFromFile(fstream *file);
 string getStringFromFile(fstream *file, char separator);
-string getStringFromFile(fstream *file);
 string parseTime(int time);
 ALLEGRO_COLOR getMenuHighlightColor();
 
