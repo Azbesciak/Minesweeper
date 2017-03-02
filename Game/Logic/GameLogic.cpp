@@ -376,18 +376,30 @@ void readUserOnMapClick(ALLEGRO_EVENT *event, bool ignoreOutsideMap, void(*f)(in
     }
 }
 
-void setNextEditorState(int x, int y, ALLEGRO_EVENT *) {
+void setNextEditorState(int x, int y, ALLEGRO_EVENT *event) {
     Field &field = map->fields[x][y];
-    if (field.type == FIELD_NORMAL) {
-        field.type = FIELD_BOMB;
-        map->bombsLimit++;
-    } else if (field.type == FIELD_BOMB) {
-        field.type = FIELD_EMPTY_SPACE;
-        map->bombsLimit--;
-        map->emptyFields++;
-    } else if (field.type == FIELD_EMPTY_SPACE) {
-        field.type = FIELD_NORMAL;
-        map->emptyFields--;
+    if (event->mouse.button & 1) {
+        if (field.type == FIELD_BOMB) {
+            map->bombsLimit--;
+            field.type = FIELD_NORMAL;
+        } else {
+            if (field.type == FIELD_EMPTY_SPACE) {
+                map->emptyFields--;
+            }
+            map->bombsLimit++;
+            field.type = FIELD_BOMB;
+        }
+    } else if (event->mouse.button & 2) {
+        if (field.type == FIELD_EMPTY_SPACE) {
+            map->emptyFields--;
+            field.type = FIELD_NORMAL;
+        } else {
+            if (field.type == FIELD_BOMB) {
+                map->bombsLimit--;
+            }
+            map->emptyFields++;
+            field.type = FIELD_EMPTY_SPACE;
+        }
     }
 }
 
