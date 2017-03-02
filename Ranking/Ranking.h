@@ -8,7 +8,6 @@ struct Stats {
     int score;
     int time;
     std::string mapProps;
-    double rank;
 };
 extern Stats *gameResult;
 //extern ALLEGRO_FONT *statsFont;

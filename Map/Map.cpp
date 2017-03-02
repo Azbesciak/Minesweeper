@@ -31,6 +31,7 @@ ALLEGRO_FONT *endGameFont = nullptr;
 void drawField(int x, int y, Field *field, int fieldWithSpanSize, bool showBombsInfo);
 ALLEGRO_COLOR getFieldColor(Field *field);
 ALLEGRO_COLOR getBombsInfoColor(int bombsInArea);
+ALLEGRO_COLOR getColor(int counter, bool isWin);
 
 void initializeMapProperties();
 void destroyMapProperties();
@@ -200,20 +201,37 @@ void destroyMap() {
 }
 
 void displayGameResult() {
+    static int counter;
     al_draw_filled_rectangle(0, (int)(SCREEN_HEIGHT * 0.3), SCREEN_WIDTH, (int)(SCREEN_HEIGHT * 0.7), al_map_rgba(0, 0, 0, 100));
+
     string message;
-    if (gameState == GAME_STATE_WON) {
+    bool isWin = gameState == GAME_STATE_WON;
+    if (isWin) {
         message = "You won";
     } else {
         message = "Game over";
     }
+    ALLEGRO_COLOR gameResultColor = getColor(counter, isWin);
+     counter = (counter + 1 ) % (int)FPS;
+
     string result = "score : " + to_string(score) + "  time: " + getCurrentTime();
-    al_draw_text(endGameFont, al_map_rgb(255, 255, 255), (int)(SCREEN_WIDTH / 2.0),
+    al_draw_text(endGameFont, gameResultColor, (int)(SCREEN_WIDTH / 2.0),
                  (int)(SCREEN_HEIGHT * 0.3), ALLEGRO_ALIGN_CENTER, message.c_str());
+
     al_draw_text(statsFont, al_map_rgb(255, 255, 255), (int)(SCREEN_WIDTH / 2.0),
                   (int)(SCREEN_HEIGHT * 0.55), ALLEGRO_ALIGN_CENTER, result.c_str());
-//    al_draw_text(statsFont, al_map_rgb(120, 144, 156), (int)(SCREEN_WIDTH / 2.0),
-//                 (int)(SCREEN_HEIGHT * 0.64), ALLEGRO_ALIGN_CENTER, "press enter to continue");
+}
+
+ALLEGRO_COLOR getColor(int counter, bool isWin) {
+    if (counter < FPS / 8 || counter >= FPS / 8 * 7) {
+        return isWin ? al_map_rgb(139, 195, 74) : al_map_rgb(244, 67, 54);
+    } else if (counter < FPS / 8 * 2 || counter >= FPS / 8 * 6) {
+        return isWin ? al_map_rgb(205, 220, 57) : al_map_rgb(233, 30, 99);
+    } else if (counter < FPS / 8 * 3 || counter >= FPS / 8 * 5) {
+        return isWin ? al_map_rgb(255, 235, 59) : al_map_rgb(156, 39, 176);
+    } else {
+        return isWin ? al_map_rgb(255, 193, 7) : al_map_rgb(103, 58, 183);
+    }
 }
 
 void displayMap(bool isGame) {
@@ -387,44 +405,64 @@ void showField(int x, int y, int value) {
 
 bool maintainGame(ALLEGRO_EVENT *event){
     if (gameState == GAME_STATE_PLAYING) {
-        readUserOnMapClick(event, updateGame);
+        readUserOnMapClick(event, false, updateGame);
     }
     return gameState == GAME_STATE_PLAYING;
 }
 
 void maintainEditor(ALLEGRO_EVENT *event) {
-    readUserOnMapClick(event, setNextEditorState);
+    readUserOnMapClick(event, true, setNextEditorState);
 }
 
 void updateGame(int x, int y, ALLEGRO_EVENT *event) {
-    if (gameState == GAME_STATE_PLAYING) {
-        Field &field = map->fields[x][y];
-        if (field.type == FIELD_EMPTY_SPACE) return;
 
-        if (event->mouse.button & 2) {
-            if (!field.wasVisited) {
-                if (field.isFlagged) {
-                    usedFlags--;
-                    field.isFlagged = false;
-                } else if (!field.isFlagged && map->bombsLimit > usedFlags) {
-                    field.isFlagged = true;
-                    usedFlags++;
+    static bool rightMouseButton;
+    static bool leftMouseButton;
+    if (gameState == GAME_STATE_PLAYING) {
+        if (event->type == ALLEGRO_EVENT_MOUSE_BUTTON_UP) {
+            if (x > -1 && compareLastClickCords(x, y)) {
+                Field &field = map->fields[x][y];
+                if (field.type != FIELD_EMPTY_SPACE) {
+
+                    if (rightMouseButton && !leftMouseButton) {
+                        if (!field.wasVisited) {
+                            if (field.isFlagged) {
+                                usedFlags--;
+                                field.isFlagged = false;
+                            } else if (!field.isFlagged && map->bombsLimit > usedFlags) {
+                                field.isFlagged = true;
+                                usedFlags++;
+                            }
+                        }
+                    } else if (leftMouseButton && !rightMouseButton) {
+                        if (score == 0) {
+                            initializeBombsIfNeed(x, y);
+                        }
+                        if (!field.wasVisited) {
+                            if (field.isFlagged) {
+                                field.isFlagged = false;
+                                usedFlags--;
+                            }
+                            showField(x, y, 1);
+                        }
+                    }
                 }
+
             }
-        } else if (event->mouse.button & 1) {
-            if (score == 0) {
-                initializeBombsIfNeed(x, y);
+            if (event->mouse.button & 1) {
+                leftMouseButton = false;
+            } else if (event->mouse.button & 2) {
+                rightMouseButton = false;
             }
-            if (!field.wasVisited) {
-                if (field.isFlagged) {
-                    field.isFlagged = false;
-                    usedFlags--;
-                }
-                    showField(x, y, 1);
+        } else if (event->type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN) {
+            if (event->mouse.button & 1) {
+                leftMouseButton = true;
+            } else if (event->mouse.button & 2) {
+                rightMouseButton = true;
             }
+            setLastClickedField(x, y);
         }
 
-        setLastClickedField(x, y);
         isGameFinished();
     }
 }
@@ -543,13 +581,17 @@ string getCurrentTime() {
     return parseTime(getGameTimeInSec());
 }
 
-void readUserOnMapClick(ALLEGRO_EVENT *event, void(*f)(int, int, ALLEGRO_EVENT *)) {
+void readUserOnMapClick(ALLEGRO_EVENT *event, bool ignoreOutsideMap, void(*f)(int, int, ALLEGRO_EVENT *)) {
     int mouseX = event->mouse.x;
     int mouseY = event->mouse.y;
     if (mouseX < startX || mouseY < startY) return;
     int x = (int)((mouseX - startX) / (double)fieldWithSpanSize);
     int y = (int)((mouseY - startY) / (double)fieldWithSpanSize);
     if (x < map->sizeX && y < map->sizeY && x >= 0 && y >= 0) {
+        f(x, y, event);
+    } else if (!ignoreOutsideMap) {
+        x = -1;
+        y = -1;
         f(x, y, event);
     }
 }

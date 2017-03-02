@@ -20,7 +20,6 @@ int rowHeight;
 void sortStats(Stats *stats, int amount) ;
 bool initStats(bool isAddMode);
 void printStat(int index, int yPosition);
-double countRank(Stats * stat);
 //implementation
 bool saveStat() {
     initStats(true);
@@ -70,7 +69,6 @@ bool initStats(bool isAddMode) {
         ranking[i].mapProps = getStringFromFile(&file, ',');
         ranking[i].score = getIntFromFile(&file, ',');
         ranking[i].time = getIntFromFile(&file);
-        ranking[i].rank = countRank(&ranking[i]);
     }
     file.close();
     return true;
@@ -82,7 +80,6 @@ void createLastPlayerStats() {
     gameResult->playerName = "";
     gameResult->mapProps = getMapProps();
     gameResult->score = getGameScore();
-    gameResult->rank = countRank(gameResult);
 }
 
 void destroyLastPlayerStats() {
@@ -150,7 +147,8 @@ void printStat(int index, int yPosition) {
 void sortStats(Stats *stats, int amount) {
     for (int i = 0; i < amount; i++) {
         for (int y = i; y < amount; y++) {
-            if (stats[i].rank < stats[y].rank) {
+            if (stats[i].score < stats[y].score ||
+                    (stats[i].score == stats[y].score && stats[i].time < stats[y].time)) {
                 swap(stats[i], stats[y]);
             }
         }
@@ -167,11 +165,3 @@ void getHigherStat() {
         rankingCursor++;
     }
 }
-
-double countRank(Stats * stat) {
-    if (stat->time == 0) {
-        stat->time = 1;
-    }
-    return stat->score / (double)stat->time;
-}
-

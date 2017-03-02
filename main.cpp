@@ -389,7 +389,8 @@ State maintainGameState(ALLEGRO_EVENT *event) {
     bool gameInProgress = true;
     if (event->keyboard.keycode == ALLEGRO_KEY_ESCAPE && event->type == ALLEGRO_EVENT_KEY_DOWN) {
         return STATE_GAME_PAUSE;
-    } else if (event->type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN) {
+    } else if (event->type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN ||
+            event->type == ALLEGRO_EVENT_MOUSE_BUTTON_UP) {
         gameInProgress = maintainGame(event);
     } else if (event->type == ALLEGRO_EVENT_TIMER) {
         incrementTimer();
@@ -428,7 +429,7 @@ State maintainGameFinishedState(ALLEGRO_EVENT *event) {
         switch (event->keyboard.keycode) {
             case ALLEGRO_KEY_LEFT : setLowerOption(GAME_FINISHED_OPTIONS); break;
             case ALLEGRO_KEY_RIGHT: setHigherOption(GAME_FINISHED_OPTIONS); break;
-            case ALLEGRO_KEY_ESCAPE:
+            case ALLEGRO_KEY_ESCAPE: return STATE_MAIN_MENU;
             case ALLEGRO_KEY_ENTER: {
                 int option = getSelectedOption();
                 switch (option) {
@@ -440,9 +441,11 @@ State maintainGameFinishedState(ALLEGRO_EVENT *event) {
             default : break;
         }
     }
-    displayMap(true);
-    displayGameResult();
-    displayGameFinishedMenu();
+    if (event->type == ALLEGRO_EVENT_TIMER) {
+        displayMap(true);
+        displayGameResult();
+        displayGameFinishedMenu();
+    }
     return STATE_GAME_FINISHED;
 }
 

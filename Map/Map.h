@@ -52,7 +52,7 @@ void createFields();
 void initializeEmptyMap(int sizeX, int sizeY);
 void destroyMap();
 void displayMap(bool isGame);
-void readUserOnMapClick(ALLEGRO_EVENT *event, void(*f)(int, int, ALLEGRO_EVENT *));
+void readUserOnMapClick(ALLEGRO_EVENT *event, bool ignoreOutsideMap, void(*f)(int, int, ALLEGRO_EVENT *));
 void resetScore();
 int getGameScore();
 void resetTimer();
