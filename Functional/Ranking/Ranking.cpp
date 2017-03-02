@@ -1,11 +1,11 @@
 #include "Ranking.h"
 #include <iostream>
 #include <fstream>
-#include <allegro5/allegro_font.h>
 #include <allegro5/allegro_primitives.h>
-#include "../Utils/Utils.h"
+#include "../../Utils/Utils.h"
 #include "../Menu/Menu.h"
 #include "../Map/Map.h"
+#include "../../Game/Logic/GameLogic.h"
 
 using namespace std;
 
@@ -17,9 +17,12 @@ int rowHeight;
 //ALLEGRO_FONT *rankingFont;
 
 //private
-void sortStats(Stats *stats, int amount) ;
+void sortStats(Stats *stats, int amount);
+
 bool initStats(bool isAddMode);
+
 void printStat(int index, int yPosition);
+
 //implementation
 bool saveStat() {
     initStats(true);
@@ -56,14 +59,14 @@ bool initStats(bool isAddMode) {
     std::string temp;
     if (!file.good() && isAddMode) {
         records = 0;
-    } else if (file.good()){
+    } else if (file.good()) {
         getline(file, temp);
         records = atoi(temp.c_str());
     } else {
         return false;
     }
     ranking = new Stats[records + isAddMode]();
-    rowHeight = (int)(SCREEN_HEIGHT / (double) MAX_STATS_ON_SCREEN * 0.6);
+    rowHeight = (int) (SCREEN_HEIGHT / (double) MAX_STATS_ON_SCREEN * 0.6);
     for (int i = 0; i < records; i++) {
         ranking[i].playerName = getStringFromFile(&file, ',');
         ranking[i].mapProps = getStringFromFile(&file, ',');
@@ -88,12 +91,12 @@ void destroyLastPlayerStats() {
     }
 }
 
-void updateLastPlayerName(ALLEGRO_EVENT * event) {
+void updateLastPlayerName(ALLEGRO_EVENT *event) {
     if (gameResult != nullptr) {
         if (event->type == ALLEGRO_EVENT_KEY_DOWN) {
             const int i = event->keyboard.keycode;
             if (i <= 26) {
-                gameResult->playerName += (char)(i + 64);
+                gameResult->playerName += (char) (i + 64);
 
             } else if (i == ALLEGRO_KEY_SPACE) {
                 gameResult->playerName += " ";
@@ -107,40 +110,47 @@ void updateLastPlayerName(ALLEGRO_EVENT * event) {
 
 void displayPlayerNameInput() {
     unsigned long nameLength = gameResult->playerName.length() + 1;
-    int yPosition = (int)(SCREEN_HEIGHT * 0.5);
-    al_draw_text(menuFont, getColor(COLOR_HIGHLIGHT), SCREEN_WIDTH / 2, yPosition - 40, ALLEGRO_ALIGN_CENTER, gameResult->playerName.c_str());
-    al_draw_line(SCREEN_WIDTH / 2 - nameLength * 10, yPosition,  SCREEN_WIDTH / 2 + nameLength * 10, yPosition, getColor(COLOR_HIGHLIGHT_PLUS), 3);
+    int yPosition = (int) (SCREEN_HEIGHT * 0.5);
+    al_draw_text(menuFont, getColor(COLOR_HIGHLIGHT), SCREEN_WIDTH / 2, yPosition - 40, ALLEGRO_ALIGN_CENTER,
+                 gameResult->playerName.c_str());
+    al_draw_line(SCREEN_WIDTH / 2 - nameLength * 10, yPosition, SCREEN_WIDTH / 2 + nameLength * 10, yPosition,
+                 getColor(COLOR_HIGHLIGHT_PLUS), 3);
 
-    al_draw_text(menuFont, getColor(COLOR_HIGHLIGHT), SCREEN_WIDTH / 2, SCREEN_HEIGHT - 90, ALLEGRO_ALIGN_CENTER, "Save");
+    al_draw_text(menuFont, getColor(COLOR_HIGHLIGHT), SCREEN_WIDTH / 2, SCREEN_HEIGHT - 90, ALLEGRO_ALIGN_CENTER,
+                 "Save");
 
-    al_draw_text(menuFont, getColor(COLOR_NORMAL), SCREEN_WIDTH / 2, SCREEN_HEIGHT - 60, ALLEGRO_ALIGN_CENTER, "Press esc to go back");
+    al_draw_text(menuFont, getColor(COLOR_NORMAL), SCREEN_WIDTH / 2, SCREEN_HEIGHT - 60, ALLEGRO_ALIGN_CENTER,
+                 "Press esc to go back");
 }
 
 void destroyStats() {
     if (ranking != nullptr) {
-        delete [] ranking;
+        delete[] ranking;
     }
 }
+
 void showStats() {
     int i = rankingCursor;
     int position = 0;
     if (records == 0) {
-        al_draw_text(menuFont, getColor(COLOR_NORMAL), SCREEN_WIDTH / 2, (int)(SCREEN_HEIGHT * 0.45), ALLEGRO_ALIGN_CENTER, "Nothing out there");
+        al_draw_text(menuFont, getColor(COLOR_NORMAL), SCREEN_WIDTH / 2, (int) (SCREEN_HEIGHT * 0.45),
+                     ALLEGRO_ALIGN_CENTER, "Nothing out there");
     } else {
         while (i < min(rankingCursor + MAX_STATS_ON_SCREEN, records)) {
-            int currentRowY = SCREEN_HEIGHT / 2  - (min(records, MAX_STATS_ON_SCREEN) / 2) * rowHeight + position;
+            int currentRowY = SCREEN_HEIGHT / 2 - (min(records, MAX_STATS_ON_SCREEN) / 2) * rowHeight + position;
             position += rowHeight;
             printStat(i, currentRowY);
             i++;
         }
     }
-    al_draw_text(menuFont, getColor(COLOR_HIGHLIGHT), SCREEN_WIDTH / 2, SCREEN_HEIGHT - 60, ALLEGRO_ALIGN_CENTER, "Press esc to go back");
+    al_draw_text(menuFont, getColor(COLOR_HIGHLIGHT), SCREEN_WIDTH / 2, SCREEN_HEIGHT - 60, ALLEGRO_ALIGN_CENTER,
+                 "Press esc to go back");
 }
 
 void printStat(int index, int yPosition) {
     Stats &stats = ranking[index];
     string info = to_string(index + 1) + ". " + stats.playerName + "    " +
-            stats.mapProps + "    " + to_string(stats.score) + "    " +  parseTime(stats.time);
+                  stats.mapProps + "    " + to_string(stats.score) + "    " + parseTime(stats.time);
     al_draw_text(menuFont, getColor(COLOR_NORMAL), SCREEN_WIDTH / 2, yPosition, ALLEGRO_ALIGN_CENTER, info.c_str());
 }
 
@@ -148,7 +158,7 @@ void sortStats(Stats *stats, int amount) {
     for (int i = 0; i < amount; i++) {
         for (int y = i; y < amount; y++) {
             if (stats[i].score < stats[y].score ||
-                    (stats[i].score == stats[y].score && stats[i].time < stats[y].time)) {
+                (stats[i].score == stats[y].score && stats[i].time < stats[y].time)) {
                 swap(stats[i], stats[y]);
             }
         }
@@ -160,6 +170,7 @@ void getLowerStat() {
         rankingCursor--;
     }
 }
+
 void getHigherStat() {
     if (rankingCursor + 1 + MAX_STATS_ON_SCREEN <= records) {
         rankingCursor++;

@@ -1,13 +1,15 @@
-#include "../Utils/Utils.h"
+#include "../../Utils/Utils.h"
 #include "Menu.h"
 #include "../Map/Map.h"
 #include <allegro5/allegro_primitives.h>
 
 Menu *menu = nullptr;
 ALLEGRO_FONT *menuFont = nullptr;
+
 void initializeMenuFont() {
     menuFont = al_load_font((FONT_PATH + MAIN_FONT).c_str(), 36, 0);
 }
+
 void destroyMenuFont() {
     al_destroy_font(menuFont);
 }
@@ -59,7 +61,7 @@ void createSaveMapMenu() {
     destroyMenu();
     createMenu(SAVE_MAP_OPTIONS);
     int availableFields = map->sizeX * map->sizeY - map->emptyFields;
-    int minPercentage = (int)(map->bombsLimit * 100 /(double)availableFields);
+    int minPercentage = (int) (map->bombsLimit * 100 / (double) availableFields);
     int maxPercentage = 99;
     int currentValue = max(15, minPercentage);
     setVariableOption(SAVE_BOMBS_LIMIT, "Bombs limit (%)", currentValue, minPercentage, maxPercentage);
@@ -117,6 +119,7 @@ void setOption(int optionId, string title) {
     option.value = -1;
     option.isChoice = false;
 }
+
 void setOption(int optionId, string title, int value) {
     MenuOption &option = menu->option[optionId];
     option.title = title;
@@ -137,13 +140,15 @@ void displayGameFinishedMenu() {
     ALLEGRO_COLOR HIGHLIGHT_COLOR = getMenuHighlightColor();
     ALLEGRO_COLOR NORMAL_COLOR = getMenuNormalColor();
     int lineX = SCREEN_WIDTH / 2;
-    int lineY = (int)(SCREEN_HEIGHT * 0.64);
+    int lineY = (int) (SCREEN_HEIGHT * 0.64);
 
     ALLEGRO_COLOR colorSave = menu->selectedVertically == GAME_FINISHED_SAVE ? HIGHLIGHT_COLOR : NORMAL_COLOR;
     ALLEGRO_COLOR colorQuit = menu->selectedVertically == GAME_FINISHED_QUIT ? HIGHLIGHT_COLOR : NORMAL_COLOR;
 
-    al_draw_text(menuFont, colorSave, lineX - 20, lineY, ALLEGRO_ALIGN_RIGHT, menu->option[GAME_FINISHED_SAVE].title.c_str());
-    al_draw_text(menuFont, colorQuit, lineX + 20, lineY, ALLEGRO_ALIGN_LEFT, menu->option[GAME_FINISHED_QUIT].title.c_str());
+    al_draw_text(menuFont, colorSave, lineX - 20, lineY, ALLEGRO_ALIGN_RIGHT,
+                 menu->option[GAME_FINISHED_SAVE].title.c_str());
+    al_draw_text(menuFont, colorQuit, lineX + 20, lineY, ALLEGRO_ALIGN_LEFT,
+                 menu->option[GAME_FINISHED_QUIT].title.c_str());
 }
 
 void displayMenu() {
@@ -151,7 +156,7 @@ void displayMenu() {
     ALLEGRO_COLOR NORMAL_COLOR = getMenuNormalColor();
     const int lineX = SCREEN_WIDTH / 2;
     for (int option = 0; option < menu->options; option++) {
-        int lineY = SCREEN_HEIGHT / 2 + option * MENU_ITEM_HEIGHT - (int)(menu->options / 2.0 * MENU_ITEM_HEIGHT);
+        int lineY = SCREEN_HEIGHT / 2 + option * MENU_ITEM_HEIGHT - (int) (menu->options / 2.0 * MENU_ITEM_HEIGHT);
         ALLEGRO_COLOR color = menu->selectedVertically == option ? HIGHLIGHT_COLOR : NORMAL_COLOR;
 
         if (menu->option[option].isChoice) {
@@ -163,7 +168,8 @@ void displayMenu() {
                                     SCREEN_WIDTH / 2 + 35, lineY + 15,
                                     SCREEN_WIDTH / 2 + 35, lineY + 35, triangleColor);
 
-            al_draw_textf(menuFont, color, SCREEN_WIDTH / 2 + 60, lineY, ALLEGRO_ALIGN_CENTER, "%i", menu->option[option].value);
+            al_draw_textf(menuFont, color, SCREEN_WIDTH / 2 + 60, lineY, ALLEGRO_ALIGN_CENTER, "%i",
+                          menu->option[option].value);
 
             triangleColor =
                     menu->selectedVertically == option && menu->selectedHorizontally == MORE ? getArrowHighlightColor()
@@ -229,7 +235,7 @@ void modifyHorizontalOption(int value) {
     int currentValue = menuOption.value;
 
     if (currentValue + value <= menuOption.maxValue &&
-            currentValue + value >= menuOption.minValue) {
+        currentValue + value >= menuOption.minValue) {
         menuOption.value += value;
     }
 }
@@ -246,7 +252,7 @@ int getBombsLimitFromMenu(bool isSaveState) {
     int stateId = isSaveState ? SAVE_BOMBS_LIMIT : menu->selectedVertically;
     if (menu != nullptr) {
         int userSelectedBombAmount = (int) ((menu->option[stateId].value / 100.0) *
-                                     (map->sizeX * map->sizeY - map->emptyFields));
+                                            (map->sizeX * map->sizeY - map->emptyFields));
         return max(userSelectedBombAmount, map->bombsLimit);
     }
     return -1;
