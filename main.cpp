@@ -11,7 +11,7 @@
 #include "Functional/Ranking/Ranking.h"
 #include "Game/Logic/GameLogic.h"
 
-
+using namespace std;
 void initializeAll();
 void destroyAll();
 

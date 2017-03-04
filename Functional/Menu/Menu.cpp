@@ -77,7 +77,7 @@ void createSelectMapMenu() {
     destroyMenu();
     createMenu(SELECT_MAP_OPTIONS);
     setOption(SELECT_10X10, "10X10");
-    setOption(SELECT_25X25, "25X10");
+    setOption(SELECT_25X25, "2525");
     setOption(SELECT_50X50, "50X50");
     setOption(SELECT_CUSTOM, "Custom");
     setOption(SELECT_BACK, "Back");
